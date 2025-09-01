@@ -5,7 +5,7 @@
             "server": "localhost",
             "driver": "PostgreSQL",
             "name": "Postgre Outfit Picker",
-            "connectString": "postgresql://postgres.ussdueuinpirojurhlgx:Bzskv24b24!@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
+            "connectString": "${env:CON_STRING}"
         }
     ]
 }
