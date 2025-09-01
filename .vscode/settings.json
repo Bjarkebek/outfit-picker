@@ -4,8 +4,8 @@
             "previewLimit": 50,
             "server": "localhost",
             "driver": "PostgreSQL",
-            "name": "Postgre Outfit Picker",
-            "connectString": "${env:CON_STRING}"
+            "name": "OUTFIT PICKER CON",
+
         }
     ]
 }

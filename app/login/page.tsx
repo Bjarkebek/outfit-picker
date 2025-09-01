@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { supabaseBrowser } from '@/lib/supabase-browser';
 
 export default function LoginPage() {
+  const supabase = supabaseBrowser();
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [msg, setMsg] = useState('');
@@ -11,24 +12,29 @@ export default function LoginPage() {
   const qp = useSearchParams();
   const backTo = qp.get('redirectedFrom') || '/';
 
+  // Sync auth -> server cookies, så middleware kan se sessionen
   useEffect(() => {
-    // Hvis man allerede er logget ind, send videre
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace(backTo);
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event, session }),
+      });
+      if (event === 'SIGNED_IN') window.location.replace('/');
     });
-  }, [router, backTo]);
+    return () => sub.subscription.unsubscribe();
+  }, [supabase]);
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
-    if (error) return setMsg(error.message);
-    router.replace(backTo);
+    if (error) setMsg(error.message);
   };
 
   const onSignup = async () => {
     const { error } = await supabase.auth.signUp({ email, password: pw });
-    if (error) return setMsg(error.message);
-    setMsg('Bruger oprettet – log ind nu.');
+    if (error) setMsg(error.message);
+    else setMsg('Bruger oprettet – tjek mail, og log derefter ind.');
   };
 
   return (

@@ -1,9 +1,37 @@
+'use client';
+
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
+  const router = useRouter();
+
+ const handleLogout = async () => {
+  // Ryd browser-session
+  await supabase.auth.signOut();
+
+  // Fortæl serveren at rydde Supabase-cookies (så middleware ser dig som logget ud)
+  await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event: 'SIGNED_OUT', session: null }),
+  });
+
+  // Ny navigation (server request) → middleware kører og sender dig til /login
+  window.location.replace('/login');
+};
+  
   return (
     <div className="relative font-sans min-h-screen bg-gray-50 dark:bg-gray-900">
+
+      <button
+        onClick={handleLogout}
+        className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 shadow">
+          Log ud
+      </button>
+
       {/* Logo fixed near the top, centered */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2">
         <Image

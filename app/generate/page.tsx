@@ -1,89 +1,77 @@
+// app/generate/page.tsx
 // Client-side page: generates a random outfit with constraints and can save it
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import Image from "next/image";
-import Link from "next/link";
+import { supabaseBrowser } from '@/lib/supabase-browser'; // ✅ browser client
+import Image from 'next/image';
+import Link from 'next/link';
 
-// Item coming from the database.
-// - category: which role the item can fill (top/bottom/jacket/...)
-// - tone: coarse color tone used to avoid identical tones between top & bottom
-// - type: free text used for simple style heuristics (e.g., tshirt, dress, jeans, sneakers)
-// - statement_piece: whether the item is a "statement" (we try to keep max 1 per outfit)
-// - season: not used in the logic right now
+// DB item type (a few optional fields used by heuristics)
 type Item = {
   id: string;
-  category: 'top'|'bottom'|'jacket'|'shoes'|'hairclip'|'jewelry';
+  category: 'top' | 'bottom' | 'jacket' | 'shoes' | 'hairclip' | 'jewelry';
   description: string | null;
-  tone: 'light'|'medium'|'dark'|null;
-  type: string | null;            // e.g., tshirt, dress, jeans, sneakers, ...
+  tone?: 'light' | 'medium' | 'dark' | null;
+  type: string | null;
   statement_piece?: boolean | null;
-  season?: string | null;         // not used in the logic right now
+  season?: string | null;
+  active?: boolean | null;
 };
 
-// Result we render/save (role + item id + readable description)
-type Chosen = { role: 'dress'|'top'|'bottom'|'jacket'|'shoes'|'hairclip'|'jewelry', id: string, desc: string };
+type Chosen = {
+  role: 'dress' | 'top' | 'bottom' | 'jacket' | 'shoes' | 'hairclip' | 'jewelry';
+  id: string;
+  desc: string;
+};
 
-// ------- STYLE HEURISTICS (no new column; based on "type") -------
-// Heuristics mapping an item's "type" to a coarse style bucket (casual/smart/formal).
-const TOP_CASUAL   = new Set(['tshirt','tanktop','croptop','hoodie','sweater','cardigan']);
-const TOP_SMART    = new Set(['blouse','shirt','vest','cardigan']); // cardigan can be both — listed in casual and smart
-const TOP_FORMAL   = new Set(['dress']); // dress handled separately
+// ------- STYLE HEURISTICS -------
+const TOP_CASUAL = new Set(['tshirt', 'tanktop', 'croptop', 'hoodie', 'sweater', 'cardigan']);
+const TOP_SMART = new Set(['blouse', 'shirt', 'vest', 'cardigan']);
+const TOP_FORMAL = new Set(['dress']);
 
-const BOTTOM_CASUAL = new Set(['jeans','shorts','leggings']);
-const BOTTOM_SMART  = new Set(['pants','chinos','skirt']); // simple heuristic
+const BOTTOM_CASUAL = new Set(['jeans', 'shorts', 'leggings']);
+const BOTTOM_SMART = new Set(['pants', 'chinos', 'skirt']);
 
-const SHOES_CASUAL  = new Set(['sneakers','sandals','flats','slippers']);
-const SHOES_SMART   = new Set(['boots','loafers']);
-const SHOES_FORMAL  = new Set(['heels']);
+const SHOES_CASUAL = new Set(['sneakers', 'sandals', 'flats', 'slippers']);
+const SHOES_SMART = new Set(['boots', 'loafers']);
+const SHOES_FORMAL = new Set(['heels']);
 
-// Compute style bucket (casual/smart/formal) for an item based on its type and category.
-function styleOf(item: Item): 'casual'|'smart'|'formal' {
+function styleOf(item: Item): 'casual' | 'smart' | 'formal' {
   const t = (item.type ?? '').toLowerCase();
 
   if (item.category === 'top') {
     if (TOP_FORMAL.has(t)) return 'formal';
-    if (TOP_SMART.has(t))  return 'smart';
+    if (TOP_SMART.has(t)) return 'smart';
     if (TOP_CASUAL.has(t)) return 'casual';
-    return 'smart'; // fallback
+    return 'smart';
   }
   if (item.category === 'bottom') {
-    if (BOTTOM_SMART.has(t))  return 'smart';
+    if (BOTTOM_SMART.has(t)) return 'smart';
     if (BOTTOM_CASUAL.has(t)) return 'casual';
-    return 'smart'; // fallback
+    return 'smart';
   }
   if (item.category === 'shoes') {
     if (SHOES_FORMAL.has(t)) return 'formal';
-    if (SHOES_SMART.has(t))  return 'smart';
+    if (SHOES_SMART.has(t)) return 'smart';
     if (SHOES_CASUAL.has(t)) return 'casual';
-    return 'smart'; // fallback
+    return 'smart';
   }
-  // jewelry/hairclip/jacket: let them follow the rest
   return 'smart';
 }
 
-// Two styles are compatible if they match, or if smart/formal are mixed.
-// Casual is not mixed with smart/formal.
-function compatible(a: 'casual'|'smart'|'formal', b: 'casual'|'smart'|'formal') {
+function compatible(a: 'casual' | 'smart' | 'formal', b: 'casual' | 'smart' | 'formal') {
   if (a === b) return true;
-  // allow smart <-> formal (but not casual mixed with them)
   if ((a === 'smart' && b === 'formal') || (a === 'formal' && b === 'smart')) return true;
   return false;
 }
 
 // ------- HELPERS -------
-
-// Return a random element from an array (or null if empty).
 function rand<T>(arr: T[]): T | null {
   if (!arr.length) return null;
-  return arr[Math.floor(Math.random()*arr.length)];
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Try to pick a random item in a given category subject to:
-// - optional filter (e.g., non-statement)
-// - avoidIds: items we must not reuse in the same outfit
-// - limited number of random attempts for performance
 function pickIn(
   items: Item[],
   category: Item['category'],
@@ -91,9 +79,10 @@ function pickIn(
   avoidIds: Set<string> = new Set(),
   tries = 8
 ): Item | null {
-  const pool = items.filter(i => i.category === category && !avoidIds.has(i.id) && (!filter || filter(i)));
+  const pool = items.filter(
+    (i) => i.category === category && !avoidIds.has(i.id) && (!filter || filter(i))
+  );
   if (!pool.length) return null;
-  // try up to N times in random order
   for (let k = 0; k < tries; k++) {
     const candidate = rand(pool);
     if (candidate) return candidate;
@@ -102,90 +91,114 @@ function pickIn(
 }
 
 export default function Generate() {
-  // roles: current generated selection shown in the UI
-  // saved: whether the last generated outfit has been persisted
+  const supabase = supabaseBrowser(); // ✅ use browser client with session
   const [roles, setRoles] = useState<Chosen[]>([]);
   const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  // Generate a new outfit using the rules:
-  // - optional "dress" branch (exclusive with top/bottom)
-  // - otherwise choose top + bottom + shoes
-  // - attempt tone and style compatibility
-  // - optional accessories (jewelry/hairclip)
-  // - then enforce max 1 statement piece
   const generate = async () => {
-    setSaved(false); // clear "saved" flag on new generation
+    setBusy(true);
+    setSaved(false);
 
-    // Fetch all active items from Supabase
-    const { data: items } = await supabase.from('item').select('*').eq('active', true);
-    if (!items) return;
+    // sanity: user must be logged in (so RLS works)
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !user) {
+      console.error('auth error', userErr);
+      alert('Du er ikke logget ind (session mangler). Log ind og prøv igen.');
+      setBusy(false);
+      return;
+    }
 
-    const avoid = new Set<string>(); // track used item ids to avoid duplicates
+    // fetch items
+    const { data, error } = await supabase
+      .from('item')
+      .select('*')
+      .eq('active', true); // fjern denne hvis dine seed-data ikke har active=true
+
+    if (error) {
+      console.error('load items error', error);
+      alert(`Kunne ikke hente items: ${error.message}`);
+      setBusy(false);
+      return;
+    }
+    const items = (data ?? []) as Item[];
+    if (items.length === 0) {
+      alert('Ingen aktive items fundet. Tilføj items (eller sæt active=true) og prøv igen.');
+      setRoles([]);
+      setBusy(false);
+      return;
+    }
+
+    const avoid = new Set<string>();
     let chosen: Chosen[] = [];
 
-    // --- 1) DRESS BRANCH (exclusive core: no top/bottom) ---
-    // Identify dresses (type === 'dress') among tops.
-    const dresses = items.filter(i => i.category === 'top' && (i.type ?? '').toLowerCase() === 'dress');
-    const pickDress = () => rand(dresses);
-
-    // 10% chance to choose a dress if any exist.
+    // DRESS branch (10% chance if present)
+    const dresses = items.filter(
+      (i) => i.category === 'top' && (i.type ?? '').toLowerCase() === 'dress'
+    );
     const useDress = dresses.length > 0 && Math.random() < 0.1;
 
     if (useDress) {
-      const dress = pickDress();
+      const dress = rand(dresses);
       if (dress) {
-        // Add dress as a single core piece (no separate top/bottom)
         chosen.push({ role: 'dress', id: dress.id, desc: dress.description ?? 'Kjole' });
         avoid.add(dress.id);
 
-        // Pick shoes that match the dress style
         const dressStyle = styleOf(dress);
-        const shoesFilter = (x: Item) => x.category === 'shoes' && compatible(styleOf(x), dressStyle);
-        // Try style-matching shoes, fall back to any shoes if none found
-        const shoes = pickIn(items, 'shoes', shoesFilter, avoid) ?? pickIn(items, 'shoes', undefined, avoid);
+        const shoes =
+          pickIn(items, 'shoes', (x) => compatible(styleOf(x), dressStyle), avoid) ??
+          pickIn(items, 'shoes', undefined, avoid);
         if (shoes) {
           chosen.push({ role: 'shoes', id: shoes.id, desc: shoes.description ?? 'Shoes' });
           avoid.add(shoes.id);
         }
 
-        // Pick jewelry (prefer non-statement to keep max 1 statement)
-        const jewelryFilter = (x: Item) => !x.statement_piece;
-        const jewelry = pickIn(items, 'jewelry', jewelryFilter, avoid) ?? pickIn(items, 'jewelry', undefined, avoid);
+        const jewelry =
+          pickIn(items, 'jewelry', (x) => !x.statement_piece, avoid) ??
+          pickIn(items, 'jewelry', undefined, avoid);
         if (jewelry) {
-          chosen.push({ role: 'jewelry', id: jewelry.id, desc: jewelry.description ?? 'Jewelry' });
+          chosen.push({
+            role: 'jewelry',
+            id: jewelry.id,
+            desc: jewelry.description ?? 'Jewelry',
+          });
           avoid.add(jewelry.id);
         }
 
-        // Optional hairclip — small probability
         if (Math.random() < 0.35) {
           const clip = pickIn(items, 'hairclip', undefined, avoid);
-          if (clip) { chosen.push({ role: 'hairclip', id: clip.id, desc: clip.description ?? 'Hairclip' }); }
+          if (clip) {
+            chosen.push({ role: 'hairclip', id: clip.id, desc: clip.description ?? 'Hairclip' });
+            avoid.add(clip.id);
+          }
         }
       }
     } else {
-      // --- 2) TOP/BOTTOM/SHOES BRANCH ---
-      // Pick top (avoid picking a dress as a top here)
-      const top = pickIn(items, 'top', (x) => (x.type ?? '').toLowerCase() !== 'dress', avoid);
+      // TOP/BOTTOM/SHOES branch
+      const top = pickIn(
+        items,
+        'top',
+        (x) => (x.type ?? '').toLowerCase() !== 'dress',
+        avoid
+      );
       if (top) {
         chosen.push({ role: 'top', id: top.id, desc: top.description ?? 'Top' });
         avoid.add(top.id);
       }
 
-      // Pick bottom that matches both tone and style
-      // Enforce:
-      // - different tone than top (if both have tone)
-      // - compatible style bucket
       let bottom: Item | null = null;
       if (top) {
         const topStyle = styleOf(top);
-        const bottomTry = () =>
-          pickIn(items, 'bottom', (b) => {
-            if (top.tone && b.tone && top.tone === b.tone) return false; // avoid same tone
-            return compatible(topStyle, styleOf(b));
-          }, avoid);
-
-        // Attempt a matching bottom, otherwise fall back to any available bottom
-        bottom = bottomTry() ?? pickIn(items, 'bottom', undefined, avoid);
+        bottom =
+          pickIn(
+            items,
+            'bottom',
+            (b) => {
+              if (top.tone && b.tone && top.tone === b.tone) return false;
+              return compatible(topStyle, styleOf(b));
+            },
+            avoid
+          ) ?? pickIn(items, 'bottom', undefined, avoid);
       } else {
         bottom = pickIn(items, 'bottom', undefined, avoid);
       }
@@ -194,14 +207,13 @@ export default function Generate() {
         avoid.add(bottom.id);
       }
 
-      // Pick shoes matching style with (top || bottom)
-      // Use whichever of top/bottom exists as the style anchor.
-      const styleAnchor = top ?? bottom;
+      const anchor = top ?? bottom;
       let shoes: Item | null = null;
-      if (styleAnchor) {
-        const anchorStyle = styleOf(styleAnchor);
-        shoes = pickIn(items, 'shoes', (s) => compatible(anchorStyle, styleOf(s)), avoid)
-            ?? pickIn(items, 'shoes', undefined, avoid);
+      if (anchor) {
+        const aStyle = styleOf(anchor);
+        shoes =
+          pickIn(items, 'shoes', (s) => compatible(aStyle, styleOf(s)), avoid) ??
+          pickIn(items, 'shoes', undefined, avoid);
       } else {
         shoes = pickIn(items, 'shoes', undefined, avoid);
       }
@@ -210,85 +222,101 @@ export default function Generate() {
         avoid.add(shoes.id);
       }
 
-      // Optional jewelry — try to keep max 1 statement (handled later)
       const jewelry = pickIn(items, 'jewelry', undefined, avoid);
       if (jewelry) {
-        chosen.push({ role: 'jewelry', id: jewelry.id, desc: jewelry.description ?? 'Jewelry' });
+        chosen.push({
+          role: 'jewelry',
+          id: jewelry.id,
+          desc: jewelry.description ?? 'Jewelry',
+        });
         avoid.add(jewelry.id);
       }
 
-      // Optional hairclip — small probability
       if (Math.random() < 0.25) {
         const clip = pickIn(items, 'hairclip', undefined, avoid);
-        if (clip) chosen.push({ role: 'hairclip', id: clip.id, desc: clip.description ?? 'Hairclip' });
+        if (clip) {
+          chosen.push({ role: 'hairclip', id: clip.id, desc: clip.description ?? 'Hairclip' });
+          avoid.add(clip.id);
+        }
       }
     }
 
-    // --- 3) MAX 1 STATEMENT PIECE ---
-    // If multiple chosen items are marked as statement, try to replace accessories
-    // with non-statement alternatives first; if that fails, remove extras.
-    const chosenIds = new Set(chosen.map(c => c.id));
-    const withItems: (Chosen & { item?: Item })[] = chosen.map(c => ({ ...c, item: items.find(i => i.id === c.id) || undefined }));
-    const statementCount = withItems.reduce((acc, c) => acc + ((c.item?.statement_piece) ? 1 : 0), 0);
+    // Enforce max 1 statement piece
+    const chosenIds = new Set(chosen.map((c) => c.id));
+    const withItems: (Chosen & { item?: Item })[] = chosen.map((c) => ({
+      ...c,
+      item: items.find((i) => i.id === c.id) || undefined,
+    }));
+    const countStatements = () =>
+      withItems.reduce((acc, c) => acc + (c.item?.statement_piece ? 1 : 0), 0);
 
-    if (statementCount > 1) {
-      // Try to swap out statement jewelry/hairclip with non-statement alternatives.
-      for (const targetRole of ['jewelry','hairclip'] as const) {
-        if (withItems.filter(c => c.item?.statement_piece).length <= 1) break;
-        const idx = withItems.findIndex(c => c.role === targetRole && c.item?.statement_piece);
+    if (countStatements() > 1) {
+      for (const targetRole of ['jewelry', 'hairclip'] as const) {
+        if (countStatements() <= 1) break;
+        const idx = withItems.findIndex((c) => c.role === targetRole && c.item?.statement_piece);
         if (idx >= 0) {
-          const replacement = pickIn(
-            items,
-            targetRole,
-            (x) => !x.statement_piece && !chosenIds.has(x.id),
-            new Set(), 6
-          );
+          const replacement =
+            pickIn(items, targetRole, (x) => !x.statement_piece && !chosenIds.has(x.id), new Set(), 6) ??
+            null;
           if (replacement) {
             chosenIds.delete(withItems[idx].id);
-            withItems[idx] = { role: targetRole, id: replacement.id, desc: replacement.description ?? targetRole, item: replacement };
+            withItems[idx] = {
+              role: targetRole,
+              id: replacement.id,
+              desc: replacement.description ?? targetRole,
+              item: replacement,
+            };
             chosenIds.add(replacement.id);
           } else {
-            // If no non-statement replacement exists, remove that accessory entirely.
             withItems.splice(idx, 1);
           }
         }
       }
-      // If still > 1 statement (e.g., both top and shoes are statement),
-      // remove the last statement to keep only one.
-      let still = withItems.filter(c => c.item?.statement_piece);
-      while (still.length > 1) {
-        const removeIdx = withItems.findLastIndex(c => c.item?.statement_piece);
+      while (countStatements() > 1) {
+        const removeIdx = withItems.findLastIndex((c) => c.item?.statement_piece);
         if (removeIdx >= 0) withItems.splice(removeIdx, 1);
-        still = withItems.filter(c => c.item?.statement_piece);
+        else break;
       }
     }
 
-    // Persist the selection to local state (strip the attached full item copies)
-    setRoles(withItems.map(({item, ...rest}) => rest));
+    const finalChosen = withItems.map(({ item, ...rest }) => rest);
+    if (finalChosen.length === 0) {
+      alert('Kunne ikke sammensætte et outfit ud fra dine items. Tilføj flere eller justér reglerne.');
+    }
+    setRoles(finalChosen);
+    setBusy(false);
   };
 
-  // Persist the generated outfit (+ relations) into the DB.
-  // 1) Insert into 'outfit' and get the created row
-  // 2) Insert one row per chosen item into 'outfititem' with role and a fixed position
   const saveOutfit = async () => {
     if (roles.length === 0) return;
+
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
+    if (userErr || !user) {
+      alert('Ingen aktiv session. Log ind og prøv igen.');
+      return;
+    }
 
     const { data: outfit, error: oErr } = await supabase
       .from('outfit')
       .insert({
         description: 'Auto-genereret outfit',
-        type: 'casual',        // can be chosen later in the UI
-        season: 'all-season',  // can be derived later
+        type: 'casual',
+        season: 'all-season',
+        owner_id: user.id,
       })
       .select()
       .single();
 
     if (oErr || !outfit) {
       console.error(oErr);
+      alert(`Kunne ikke gemme outfit: ${oErr?.message ?? 'ukendt fejl'}`);
       return;
     }
 
-    const outfitItems = roles.map(r => ({
+    const outfitItems = roles.map((r) => ({
       outfit_id: outfit.id,
       item_id: r.id,
       role: r.role,
@@ -298,52 +326,64 @@ export default function Generate() {
     const { error: oiErr } = await supabase.from('outfititem').insert(outfitItems);
     if (oiErr) {
       console.error(oiErr);
+      alert(`Kunne ikke gemme items: ${oiErr.message}`);
       return;
     }
 
-    setSaved(true); // show confirmation in the UI
+    setSaved(true);
   };
 
   return (
-    // Narrow, centered layout container for the generator UI
-    <div className="max-w-xl mx-auto p-6 grid gap-3">
-      {/* Sticky navbar with back button, centered logo, and link to Items page */}
-      <nav className="flex items-center justify-between px-2 py-4 mb-8 border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-gray-900/80 sticky top-0 z-10 rounded-xl">
-        <Link href="#"><button className="hidden" aria-hidden /></Link>{/* placeholder to keep Link import valid if needed */}
-        <Link href="/"><button className="rounded-lg px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition">← Back</button></Link>
-        <Image src="/OutfitPickerLogo.png" alt="Outfit Picker Logo" width={50} height={50} priority />
-        <Link href="/items"><button className="rounded-lg px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition">Manage items</button></Link>
-      </nav>
+    <>
+      {/* navbar */}
+      <div className="mx-auto max-w-5xl px-4">
+        <nav className="flex items-center justify-between px-2 py-4 mb-8 border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-gray-900/80 sticky top-0 z-10 rounded-xl">
+          <Link href="/">
+            <button className="rounded-lg px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition">
+              ← Back
+            </button>
+          </Link>
+          <Image src="/OutfitPickerLogo.png" alt="Outfit Picker Logo" width={50} height={50} priority />
+          <Link href="/items">
+            <button className="rounded-lg px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition">
+              Manage items
+            </button>
+          </Link>
+        </nav>
+      </div>
 
-      {/* Page title (UI text kept as-is) */}
-      <h1 className="text-2xl font-bold">Foreslå outfit</h1>
+      {/* Main content */}
+      <div className="max-w-xl mx-auto p-6 grid gap-3">
+        <h1 className="text-2xl font-bold">Foreslå outfit</h1>
 
-      {/* Navigate to a page listing saved outfits */}
-      <Link href="/outfits">
-        <button className="bg-blue-600 text-white py-2 rounded w-full">Se gemte outfits</button>
-      </Link>
+        <Link href="/outfits">
+          <button className="bg-blue-600 text-white py-2 rounded w-full">Se gemte outfits</button>
+        </Link>
 
-      {/* Trigger generation with the current rules */}
-      <button className="bg-green-600 text-white py-2 rounded" onClick={generate}>Generate</button>
-
-      {/* Render the chosen roles (role label + item description) */}
-      <ul className="mt-4 space-y-2">
-        {roles.map(r => (
-          <li key={r.role} className="border p-3 rounded">
-            <b>{r.role}</b> — {r.desc}
-          </li>
-        ))}
-      </ul>
-
-      {/* Only show the save button when an outfit has been generated */}
-      {roles.length > 0 && (
-        <button className="bg-blue-600 text-white py-2 rounded" onClick={saveOutfit}>
-          Gem outfit
+        <button
+          className="bg-green-600 text-white py-2 rounded disabled:opacity-60"
+          onClick={generate}
+          disabled={busy}
+        >
+          {busy ? 'Genererer…' : 'Generate'}
         </button>
-      )}
 
-      {/* Confirmation after saving */}
-      {saved && <p className="text-green-700 font-semibold">Outfit gemt ✅</p>}
-    </div>
+        <ul className="mt-4 space-y-2">
+          {roles.map((r) => (
+            <li key={r.role} className="border p-3 rounded">
+              <b>{r.role}</b> — {r.desc}
+            </li>
+          ))}
+        </ul>
+
+        {roles.length > 0 && (
+          <button className="bg-blue-600 text-white py-2 rounded" onClick={saveOutfit}>
+            Gem outfit
+          </button>
+        )}
+
+        {saved && <p className="text-green-700 font-semibold">Outfit gemt ✅</p>}
+      </div>
+    </>
   );
 }
