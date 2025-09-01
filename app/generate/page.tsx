@@ -12,7 +12,7 @@ type Item = {
   id: string;
   category: 'top' | 'bottom' | 'jacket' | 'shoes' | 'hairclip' | 'jewelry';
   description: string | null;
-  tone?: 'light' | 'medium' | 'dark' | null;
+  shade?: 'light' | 'medium' | 'dark' | null;
   type: string | null;
   statement_piece?: boolean | null;
   season?: string | null;
@@ -194,7 +194,7 @@ export default function Generate() {
             items,
             'bottom',
             (b) => {
-              if (top.tone && b.tone && top.tone === b.tone) return false;
+              if (top.shade && b.shade && top.shade === b.shade) return false;
               return compatible(topStyle, styleOf(b));
             },
             avoid
