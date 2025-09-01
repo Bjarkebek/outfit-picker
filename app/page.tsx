@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import Link from "next/link";
+import Logo from '@/public/OutfitPicker.png';
 
 export default function Home() {
   const router = useRouter();
@@ -35,10 +36,8 @@ export default function Home() {
       {/* Logo fixed near the top, centered */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2">
         <Image
-          src="/OutfitPicker.png"
+          src={Logo}                 // <-- static import avoids optimizer path issues
           alt="outfit picker logo"
-          width={500}
-          height={500}
           priority
         />
       </div>

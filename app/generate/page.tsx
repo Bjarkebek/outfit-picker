@@ -334,7 +334,7 @@ export default function Generate() {
   };
 
   return (
-    <>
+    <div className="mx-auto max-w-5xl px-4 py-8 relative">
       {/* navbar */}
       <div className="mx-auto max-w-5xl px-4">
         <nav className="flex items-center justify-between px-2 py-4 mb-8 border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-gray-900/80 sticky top-0 z-10 rounded-xl">
@@ -384,6 +384,6 @@ export default function Generate() {
 
         {saved && <p className="text-green-700 font-semibold">Outfit gemt ✅</p>}
       </div>
-    </>
+    </div>
   );
 }
