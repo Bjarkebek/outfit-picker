@@ -1,48 +1,42 @@
-'use client';
+"use client";
 
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import Logo from '@/public/OutfitPicker.png';
+import Logo from "@/public/OutfitPicker.png";
 
 export default function Home() {
   const router = useRouter();
 
- const handleLogout = async () => {
-  // Ryd browser-session
-  await supabase.auth.signOut();
+  const handleLogout = async () => {
+    // Ryd browser-session
+    await supabase.auth.signOut();
 
-  // Fortæl serveren at rydde Supabase-cookies (så middleware ser dig som logget ud)
-  await fetch('/api/auth', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ event: 'SIGNED_OUT', session: null }),
-  });
+    // Fortæl serveren at rydde Supabase-cookies (så middleware ser dig som logget ud)
+    await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "SIGNED_OUT", session: null }),
+    });
 
-  // Ny navigation (server request) → middleware kører og sender dig til /login
-  window.location.replace('/login');
-};
-  
+    // Ny navigation (server request) → middleware kører og sender dig til /login
+    window.location.replace("/login");
+  };
+
   return (
     <div className="relative font-sans min-h-screen bg-gray-50 dark:bg-gray-900">
-
       <button
         onClick={handleLogout}
-        className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 shadow">
-          Log ud
+        className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 shadow"
+      >
+        Log ud
       </button>
 
-      {/* Logo fixed near the top, centered */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2">
-        <Image
-          src={Logo}                 // <-- static import avoids optimizer path issues
-          alt="outfit picker logo"
-          priority
-        />
+        <Image src={Logo} alt="outfit picker logo" priority />
       </div>
 
-      {/* Center text and buttons; add top padding to avoid overlap with the logo */}
       <div className="min-h-screen flex flex-col items-center justify-center p-8 gap-12 pt-32 md:pt-40">
         <header className="flex flex-col items-center gap-2">
           <p className="text-2xl text-gray-700 dark:text-gray-300 text-center max-w-md mt-2">

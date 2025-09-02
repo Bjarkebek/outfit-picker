@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { supabaseBrowser } from '@/lib/supabase-browser'; // ✅ brug browser-klient
-import Image from 'next/image';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { supabaseBrowser } from "@/lib/supabase-browser"; // ✅ brug browser-klient
+import Image from "next/image";
+import Link from "next/link";
 
 type OutfitRow = {
   id: string;
@@ -41,18 +41,21 @@ export default function OutfitsPage() {
       setErr(null);
       try {
         // Sikr at vi HAR en session (ellers filtrerer RLS alt væk)
-        const { data: { user }, error: uErr } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error: uErr,
+        } = await supabase.auth.getUser();
         if (uErr || !user) {
-          setErr('Ingen aktiv session. Log ind og prøv igen.');
+          setErr("Ingen aktiv session. Log ind og prøv igen.");
           setLoading(false);
           return;
         }
 
         // 1) Hent alle outfits for brugeren (RLS sørger for ejer-filter)
         const { data: outfitsData, error: oErr } = await supabase
-          .from('outfit')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .from("outfit")
+          .select("*")
+          .order("created_at", { ascending: false });
 
         if (oErr) {
           console.error(oErr);
@@ -70,9 +73,9 @@ export default function OutfitsPage() {
         // 2) Hent alle outfititems for ALLE outfits i ét kald (mindre chatter)
         const ids = rows.map((o) => o.id);
         const { data: itemsData, error: iErr } = await supabase
-          .from('outfititem')
-          .select('outfit_id, role, item:item_id (description, image_url)')
-          .in('outfit_id', ids);
+          .from("outfititem")
+          .select("outfit_id, role, item:item_id (description, image_url)")
+          .in("outfit_id", ids);
 
         if (iErr) {
           console.error(iErr);
@@ -94,15 +97,25 @@ export default function OutfitsPage() {
           const list = byOutfit.get(o.id) ?? [];
           const mapped = list.map((it) => {
             // Normalisér item til ét objekt (håndtér både objekt/array/null)
-            let itemObj: { description: string | null; image_url: string | null } = {
+            let itemObj: {
+              description: string | null;
+              image_url: string | null;
+            } = {
               description: null,
               image_url: null,
             };
             if (Array.isArray(it.item)) {
               const first = it.item[0];
-              if (first) itemObj = { description: first.description, image_url: first.image_url };
-            } else if (it.item && typeof it.item === 'object') {
-              itemObj = { description: it.item.description, image_url: it.item.image_url };
+              if (first)
+                itemObj = {
+                  description: first.description,
+                  image_url: first.image_url,
+                };
+            } else if (it.item && typeof it.item === "object") {
+              itemObj = {
+                description: it.item.description,
+                image_url: it.item.image_url,
+              };
             }
             return { role: it.role, item: itemObj };
           });
@@ -118,7 +131,7 @@ export default function OutfitsPage() {
         setOutfits(full);
       } catch (e: any) {
         console.error(e);
-        setErr(e?.message ?? 'Ukendt fejl');
+        setErr(e?.message ?? "Ukendt fejl");
       } finally {
         setLoading(false);
       }
@@ -174,7 +187,7 @@ export default function OutfitsPage() {
           >
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">
-                {o.description || 'Outfit'}
+                {o.description || "Outfit"}
                 <span className="ml-2 text-sm text-gray-500">
                   {new Date(o.created_at).toLocaleDateString()}
                 </span>
@@ -187,7 +200,7 @@ export default function OutfitsPage() {
                   {it.item.image_url ? (
                     <img
                       src={it.item.image_url}
-                      alt={it.item.description ?? ''}
+                      alt={it.item.description ?? ""}
                       className="h-12 w-12 rounded object-cover border"
                     />
                   ) : (
@@ -196,7 +209,8 @@ export default function OutfitsPage() {
                     </div>
                   )}
                   <span>
-                    <b>{it.role}</b> — {it.item.description ?? '(ingen beskrivelse)'}
+                    <b>{it.role}</b> —{" "}
+                    {it.item.description ?? "(ingen beskrivelse)"}
                   </span>
                 </li>
               ))}

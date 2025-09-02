@@ -1,18 +1,18 @@
 // app/generate/page.tsx
 // Client-side page: generates a random outfit with constraints and can save it
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { supabaseBrowser } from '@/lib/supabase-browser'; // ✅ browser client
-import Image from 'next/image';
-import Link from 'next/link';
+import { useState } from "react";
+import { supabaseBrowser } from "@/lib/supabase-browser"; // ✅ browser client
+import Image from "next/image";
+import Link from "next/link";
 
 // DB item type (a few optional fields used by heuristics)
 type Item = {
   id: string;
-  category: 'top' | 'bottom' | 'jacket' | 'shoes' | 'hairclip' | 'jewelry';
+  category: "top" | "bottom" | "jacket" | "shoes" | "hairclip" | "jewelry";
   description: string | null;
-  shade?: 'light' | 'medium' | 'dark' | null;
+  shade?: "light" | "medium" | "dark" | null;
   type: string | null;
   statement_piece?: boolean | null;
   season?: string | null;
@@ -20,49 +20,60 @@ type Item = {
 };
 
 type Chosen = {
-  role: 'dress' | 'top' | 'bottom' | 'jacket' | 'shoes' | 'hairclip' | 'jewelry';
+  role:
+    | "dress"
+    | "top"
+    | "bottom"
+    | "jacket"
+    | "shoes"
+    | "hairclip"
+    | "jewelry";
   id: string;
   desc: string;
 };
 
 // ------- STYLE HEURISTICS -------
-const TOP_CASUAL = new Set(['tshirt', 'tanktop', 'croptop', 'hoodie', 'sweater', 'cardigan']);
-const TOP_SMART = new Set(['blouse', 'shirt', 'vest', 'cardigan']);
-const TOP_FORMAL = new Set(['dress']);
+const TOP_CASUAL = new Set(["tshirt", "tanktop", "croptop", "hoodie", "sweater", "cardigan"]);
+const TOP_SMART = new Set(["blouse", "shirt", "vest", "cardigan"]);
+const TOP_FORMAL = new Set(["dress"]);
 
-const BOTTOM_CASUAL = new Set(['jeans', 'shorts', 'leggings']);
-const BOTTOM_SMART = new Set(['pants', 'chinos', 'skirt']);
+const BOTTOM_CASUAL = new Set(["jeans", "shorts", "leggings"]);
+const BOTTOM_SMART = new Set(["pants", "chinos", "skirt"]);
 
-const SHOES_CASUAL = new Set(['sneakers', 'sandals', 'flats', 'slippers']);
-const SHOES_SMART = new Set(['boots', 'loafers']);
-const SHOES_FORMAL = new Set(['heels']);
+const SHOES_CASUAL = new Set(["sneakers", "sandals", "flats", "slippers"]);
+const SHOES_SMART = new Set(["boots", "loafers"]);
+const SHOES_FORMAL = new Set(["heels"]);
 
-function styleOf(item: Item): 'casual' | 'smart' | 'formal' {
-  const t = (item.type ?? '').toLowerCase();
+function styleOf(item: Item): "casual" | "smart" | "formal" {
+  const t = (item.type ?? "").toLowerCase();
 
-  if (item.category === 'top') {
-    if (TOP_FORMAL.has(t)) return 'formal';
-    if (TOP_SMART.has(t)) return 'smart';
-    if (TOP_CASUAL.has(t)) return 'casual';
-    return 'smart';
+  if (item.category === "top") {
+    if (TOP_FORMAL.has(t)) return "formal";
+    if (TOP_SMART.has(t)) return "smart";
+    if (TOP_CASUAL.has(t)) return "casual";
+    return "smart";
   }
-  if (item.category === 'bottom') {
-    if (BOTTOM_SMART.has(t)) return 'smart';
-    if (BOTTOM_CASUAL.has(t)) return 'casual';
-    return 'smart';
+  if (item.category === "bottom") {
+    if (BOTTOM_SMART.has(t)) return "smart";
+    if (BOTTOM_CASUAL.has(t)) return "casual";
+    return "smart";
   }
-  if (item.category === 'shoes') {
-    if (SHOES_FORMAL.has(t)) return 'formal';
-    if (SHOES_SMART.has(t)) return 'smart';
-    if (SHOES_CASUAL.has(t)) return 'casual';
-    return 'smart';
+  if (item.category === "shoes") {
+    if (SHOES_FORMAL.has(t)) return "formal";
+    if (SHOES_SMART.has(t)) return "smart";
+    if (SHOES_CASUAL.has(t)) return "casual";
+    return "smart";
   }
-  return 'smart';
+  return "smart";
 }
 
-function compatible(a: 'casual' | 'smart' | 'formal', b: 'casual' | 'smart' | 'formal') {
+function compatible(
+  a: "casual" | "smart" | "formal",
+  b: "casual" | "smart" | "formal"
+) {
   if (a === b) return true;
-  if ((a === 'smart' && b === 'formal') || (a === 'formal' && b === 'smart')) return true;
+  if ((a === "smart" && b === "formal") || (a === "formal" && b === "smart"))
+    return true;
   return false;
 }
 
@@ -74,13 +85,14 @@ function rand<T>(arr: T[]): T | null {
 
 function pickIn(
   items: Item[],
-  category: Item['category'],
+  category: Item["category"],
   filter?: (x: Item) => boolean,
   avoidIds: Set<string> = new Set(),
   tries = 8
 ): Item | null {
   const pool = items.filter(
-    (i) => i.category === category && !avoidIds.has(i.id) && (!filter || filter(i))
+    (i) =>
+      i.category === category && !avoidIds.has(i.id) && (!filter || filter(i))
   );
   if (!pool.length) return null;
   for (let k = 0; k < tries; k++) {
@@ -101,29 +113,34 @@ export default function Generate() {
     setSaved(false);
 
     // sanity: user must be logged in (so RLS works)
-    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
     if (userErr || !user) {
-      console.error('auth error', userErr);
-      alert('Du er ikke logget ind (session mangler). Log ind og prøv igen.');
+      console.error("auth error", userErr);
+      alert("Du er ikke logget ind (session mangler). Log ind og prøv igen.");
       setBusy(false);
       return;
     }
 
     // fetch items
     const { data, error } = await supabase
-      .from('item')
-      .select('*')
-      .eq('active', true); // fjern denne hvis dine seed-data ikke har active=true
+      .from("item")
+      .select("*")
+      .eq("active", true); // fjern denne hvis dine seed-data ikke har active=true
 
     if (error) {
-      console.error('load items error', error);
+      console.error("load items error", error);
       alert(`Kunne ikke hente items: ${error.message}`);
       setBusy(false);
       return;
     }
     const items = (data ?? []) as Item[];
     if (items.length === 0) {
-      alert('Ingen aktive items fundet. Tilføj items (eller sæt active=true) og prøv igen.');
+      alert(
+        "Ingen aktive items fundet. Tilføj items (eller sæt active=true) og prøv igen."
+      );
       setRoles([]);
       setBusy(false);
       return;
@@ -134,41 +151,57 @@ export default function Generate() {
 
     // DRESS branch (10% chance if present)
     const dresses = items.filter(
-      (i) => i.category === 'top' && (i.type ?? '').toLowerCase() === 'dress'
+      (i) => i.category === "top" && (i.type ?? "").toLowerCase() === "dress"
     );
     const useDress = dresses.length > 0 && Math.random() < 0.1;
 
     if (useDress) {
       const dress = rand(dresses);
       if (dress) {
-        chosen.push({ role: 'dress', id: dress.id, desc: dress.description ?? 'Kjole' });
+        chosen.push({
+          role: "dress",
+          id: dress.id,
+          desc: dress.description ?? "Kjole",
+        });
         avoid.add(dress.id);
 
         const dressStyle = styleOf(dress);
         const shoes =
-          pickIn(items, 'shoes', (x) => compatible(styleOf(x), dressStyle), avoid) ??
-          pickIn(items, 'shoes', undefined, avoid);
+          pickIn(
+            items,
+            "shoes",
+            (x) => compatible(styleOf(x), dressStyle),
+            avoid
+          ) ?? pickIn(items, "shoes", undefined, avoid);
         if (shoes) {
-          chosen.push({ role: 'shoes', id: shoes.id, desc: shoes.description ?? 'Shoes' });
+          chosen.push({
+            role: "shoes",
+            id: shoes.id,
+            desc: shoes.description ?? "Shoes",
+          });
           avoid.add(shoes.id);
         }
 
         const jewelry =
-          pickIn(items, 'jewelry', (x) => !x.statement_piece, avoid) ??
-          pickIn(items, 'jewelry', undefined, avoid);
+          pickIn(items, "jewelry", (x) => !x.statement_piece, avoid) ??
+          pickIn(items, "jewelry", undefined, avoid);
         if (jewelry) {
           chosen.push({
-            role: 'jewelry',
+            role: "jewelry",
             id: jewelry.id,
-            desc: jewelry.description ?? 'Jewelry',
+            desc: jewelry.description ?? "Jewelry",
           });
           avoid.add(jewelry.id);
         }
 
         if (Math.random() < 0.35) {
-          const clip = pickIn(items, 'hairclip', undefined, avoid);
+          const clip = pickIn(items, "hairclip", undefined, avoid);
           if (clip) {
-            chosen.push({ role: 'hairclip', id: clip.id, desc: clip.description ?? 'Hairclip' });
+            chosen.push({
+              role: "hairclip",
+              id: clip.id,
+              desc: clip.description ?? "Hairclip",
+            });
             avoid.add(clip.id);
           }
         }
@@ -177,12 +210,16 @@ export default function Generate() {
       // TOP/BOTTOM/SHOES branch
       const top = pickIn(
         items,
-        'top',
-        (x) => (x.type ?? '').toLowerCase() !== 'dress',
+        "top",
+        (x) => (x.type ?? "").toLowerCase() !== "dress",
         avoid
       );
       if (top) {
-        chosen.push({ role: 'top', id: top.id, desc: top.description ?? 'Top' });
+        chosen.push({
+          role: "top",
+          id: top.id,
+          desc: top.description ?? "Top",
+        });
         avoid.add(top.id);
       }
 
@@ -192,18 +229,22 @@ export default function Generate() {
         bottom =
           pickIn(
             items,
-            'bottom',
+            "bottom",
             (b) => {
               if (top.shade && b.shade && top.shade === b.shade) return false;
               return compatible(topStyle, styleOf(b));
             },
             avoid
-          ) ?? pickIn(items, 'bottom', undefined, avoid);
+          ) ?? pickIn(items, "bottom", undefined, avoid);
       } else {
-        bottom = pickIn(items, 'bottom', undefined, avoid);
+        bottom = pickIn(items, "bottom", undefined, avoid);
       }
       if (bottom) {
-        chosen.push({ role: 'bottom', id: bottom.id, desc: bottom.description ?? 'Bottom' });
+        chosen.push({
+          role: "bottom",
+          id: bottom.id,
+          desc: bottom.description ?? "Bottom",
+        });
         avoid.add(bottom.id);
       }
 
@@ -212,30 +253,42 @@ export default function Generate() {
       if (anchor) {
         const aStyle = styleOf(anchor);
         shoes =
-          pickIn(items, 'shoes', (s) => compatible(aStyle, styleOf(s)), avoid) ??
-          pickIn(items, 'shoes', undefined, avoid);
+          pickIn(
+            items,
+            "shoes",
+            (s) => compatible(aStyle, styleOf(s)),
+            avoid
+          ) ?? pickIn(items, "shoes", undefined, avoid);
       } else {
-        shoes = pickIn(items, 'shoes', undefined, avoid);
+        shoes = pickIn(items, "shoes", undefined, avoid);
       }
       if (shoes) {
-        chosen.push({ role: 'shoes', id: shoes.id, desc: shoes.description ?? 'Shoes' });
+        chosen.push({
+          role: "shoes",
+          id: shoes.id,
+          desc: shoes.description ?? "Shoes",
+        });
         avoid.add(shoes.id);
       }
 
-      const jewelry = pickIn(items, 'jewelry', undefined, avoid);
+      const jewelry = pickIn(items, "jewelry", undefined, avoid);
       if (jewelry) {
         chosen.push({
-          role: 'jewelry',
+          role: "jewelry",
           id: jewelry.id,
-          desc: jewelry.description ?? 'Jewelry',
+          desc: jewelry.description ?? "Jewelry",
         });
         avoid.add(jewelry.id);
       }
 
       if (Math.random() < 0.25) {
-        const clip = pickIn(items, 'hairclip', undefined, avoid);
+        const clip = pickIn(items, "hairclip", undefined, avoid);
         if (clip) {
-          chosen.push({ role: 'hairclip', id: clip.id, desc: clip.description ?? 'Hairclip' });
+          chosen.push({
+            role: "hairclip",
+            id: clip.id,
+            desc: clip.description ?? "Hairclip",
+          });
           avoid.add(clip.id);
         }
       }
@@ -251,13 +304,20 @@ export default function Generate() {
       withItems.reduce((acc, c) => acc + (c.item?.statement_piece ? 1 : 0), 0);
 
     if (countStatements() > 1) {
-      for (const targetRole of ['jewelry', 'hairclip'] as const) {
+      for (const targetRole of ["jewelry", "hairclip"] as const) {
         if (countStatements() <= 1) break;
-        const idx = withItems.findIndex((c) => c.role === targetRole && c.item?.statement_piece);
+        const idx = withItems.findIndex(
+          (c) => c.role === targetRole && c.item?.statement_piece
+        );
         if (idx >= 0) {
           const replacement =
-            pickIn(items, targetRole, (x) => !x.statement_piece && !chosenIds.has(x.id), new Set(), 6) ??
-            null;
+            pickIn(
+              items,
+              targetRole,
+              (x) => !x.statement_piece && !chosenIds.has(x.id),
+              new Set(),
+              6
+            ) ?? null;
           if (replacement) {
             chosenIds.delete(withItems[idx].id);
             withItems[idx] = {
@@ -273,7 +333,9 @@ export default function Generate() {
         }
       }
       while (countStatements() > 1) {
-        const removeIdx = withItems.findLastIndex((c) => c.item?.statement_piece);
+        const removeIdx = withItems.findLastIndex(
+          (c) => c.item?.statement_piece
+        );
         if (removeIdx >= 0) withItems.splice(removeIdx, 1);
         else break;
       }
@@ -281,7 +343,9 @@ export default function Generate() {
 
     const finalChosen = withItems.map(({ item, ...rest }) => rest);
     if (finalChosen.length === 0) {
-      alert('Kunne ikke sammensætte et outfit ud fra dine items. Tilføj flere eller justér reglerne.');
+      alert(
+        "Kunne ikke sammensætte et outfit ud fra dine items. Tilføj flere eller justér reglerne."
+      );
     }
     setRoles(finalChosen);
     setBusy(false);
@@ -295,16 +359,16 @@ export default function Generate() {
       error: userErr,
     } = await supabase.auth.getUser();
     if (userErr || !user) {
-      alert('Ingen aktiv session. Log ind og prøv igen.');
+      alert("Ingen aktiv session. Log ind og prøv igen.");
       return;
     }
 
     const { data: outfit, error: oErr } = await supabase
-      .from('outfit')
+      .from("outfit")
       .insert({
-        description: 'Auto-genereret outfit',
-        type: 'casual',
-        season: 'all-season',
+        description: "Auto-genereret outfit",
+        type: "casual",
+        season: "all-season",
         owner_id: user.id,
       })
       .select()
@@ -312,7 +376,7 @@ export default function Generate() {
 
     if (oErr || !outfit) {
       console.error(oErr);
-      alert(`Kunne ikke gemme outfit: ${oErr?.message ?? 'ukendt fejl'}`);
+      alert(`Kunne ikke gemme outfit: ${oErr?.message ?? "ukendt fejl"}`);
       return;
     }
 
@@ -323,7 +387,9 @@ export default function Generate() {
       position: 1,
     }));
 
-    const { error: oiErr } = await supabase.from('outfititem').insert(outfitItems);
+    const { error: oiErr } = await supabase
+      .from("outfititem")
+      .insert(outfitItems);
     if (oiErr) {
       console.error(oiErr);
       alert(`Kunne ikke gemme items: ${oiErr.message}`);
@@ -343,7 +409,13 @@ export default function Generate() {
               ← Back
             </button>
           </Link>
-          <Image src="/OutfitPickerLogo.png" alt="Outfit Picker Logo" width={50} height={50} priority />
+          <Image
+            src="/OutfitPickerLogo.png"
+            alt="Outfit Picker Logo"
+            width={50}
+            height={50}
+            priority
+          />
           <Link href="/items">
             <button className="rounded-lg px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition">
               Manage items
@@ -357,7 +429,9 @@ export default function Generate() {
         <h1 className="text-2xl font-bold">Foreslå outfit</h1>
 
         <Link href="/outfits">
-          <button className="bg-blue-600 text-white py-2 rounded w-full">Se gemte outfits</button>
+          <button className="bg-blue-600 text-white py-2 rounded w-full">
+            Se gemte outfits
+          </button>
         </Link>
 
         <button
@@ -365,7 +439,7 @@ export default function Generate() {
           onClick={generate}
           disabled={busy}
         >
-          {busy ? 'Genererer…' : 'Generate'}
+          {busy ? "Genererer…" : "Generate"}
         </button>
 
         <ul className="mt-4 space-y-2">
@@ -377,12 +451,17 @@ export default function Generate() {
         </ul>
 
         {roles.length > 0 && (
-          <button className="bg-blue-600 text-white py-2 rounded" onClick={saveOutfit}>
+          <button
+            className="bg-blue-600 text-white py-2 rounded"
+            onClick={saveOutfit}
+          >
             Gem outfit
           </button>
         )}
 
-        {saved && <p className="text-green-700 font-semibold">Outfit gemt ✅</p>}
+        {saved && (
+          <p className="text-green-700 font-semibold">Outfit gemt ✅</p>
+        )}
       </div>
     </div>
   );
