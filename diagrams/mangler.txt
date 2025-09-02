@@ -1,0 +1,10 @@
+outfit picker
+
+
+- Generering af outfits skal have filter (anledning, sæson f.eks. )
+- fastlåse items i generering
+- mere kontrol til gem outfit / gemte outfits (sæt anledning f.eks.)
+- Jewlery skal kunne være i bundles
+- bedre layout til genererede outfits (større billeder f.eks.)
+- bruger redigering (ændring af password er vigtigst)
+- sætte det op så F kan bruge det på hendes computer
