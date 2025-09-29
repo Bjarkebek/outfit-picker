@@ -44,14 +44,14 @@ export default function Home() {
           </p>
         </header>
         <main className="flex flex-col sm:flex-row gap-6 mt-6">
-          <Link href="/items">
-            <button className="rounded-lg px-6 py-3 bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition w-full sm:w-auto">
-              Manage Wardrobe
-            </button>
-          </Link>
           <Link href="/generate">
             <button className="rounded-lg px-10 py-3 bg-green-600 text-white font-semibold text-lg hover:bg-green-700 transition w-full sm:w-auto">
               Generate Outfit
+            </button>
+          </Link>
+          <Link href="/items">
+            <button className="rounded-lg px-6 py-3 bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition w-full sm:w-auto">
+              Manage Wardrobe
             </button>
           </Link>
         </main>

@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * Items page
+ * - Create, list, edit and delete wardrobe items
+ * - Uploads optional images to Supabase Storage
+ * - Stores base item data in table "item" and subtype details in tables:
+ *   top, bottom, jacket, shoe, jewelry
+ */
+
 // imports
 import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase-browser";
@@ -14,8 +22,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
-
 // Base Item
+// Represents the shared columns for any wardrobe item.
+// Subtype-specific fields are stored in the subtype tables.
 type Item = {
   id: string;
   category: "top" | "bottom" | "jacket" | "shoes" | "hairclip" | "jewelry";
@@ -32,27 +41,74 @@ type Item = {
 };
 
 // Subtype “views”
-type TopRow = {
+// These mirror the subtype tables and are merged into UI state for display/edit.
+type Top = {
   item_id: string;
   type: string | null;
   sleevelength: "short" | "long" | null;
 };
-type BottomRow = { item_id: string; type: string | null };
-type JacketRow = { item_id: string; type: string | null };
-type ShoeRow = { item_id: string; type: string | null; heel: boolean | null };
-type JewelryRow = { item_id: string; type: string | null };
+type Bottom = { item_id: string; type: string | null };
+type Jacket = { item_id: string; type: string | null };
+type Shoe = { item_id: string; type: string | null; heel: boolean | null };
+type Jewelry = { item_id: string; type: string | null };
 
 // UI constants (drop-down options)
-const CATEGORIES: Item["category"][] = ["top", "bottom", "jacket", "shoes", "hairclip", "jewelry"];
+const CATEGORIES: Item["category"][] = [
+  "top",
+  "bottom",
+  "jacket",
+  "shoes",
+  "hairclip",
+  "jewelry",
+];
 const SEASONS = ["spring", "summer", "autumn", "winter", "all-season"] as const;
 const SHADES = ["light", "medium", "dark"] as const;
-const TOP_TYPES_FIXED = ["t-shirt", "shirt", "blouse", "cardigan", "sweater", "hoodie", "dress", "vest"] as const;
-const BOTTOM_TYPES_FIXED = ["pants", "jeans", "shorts", "sweatpants", "skirt", "leggins"] as const;
-const SHOES_TYPES_FIXED = ["sneakers", "sandals", "boots", "heels", "flats", "slippers"] as const;
-const JACKET_TYPES_FIXED = ["blazer", "denim", "puffer", "parka", "overcoat", "trenchcoat", "raincoat", "windbreaker"] as const;
-const JEWLERY_TYPES_FIXED = ["earrings", "necklace", "bracelet", "rings", "watch"] as const;
-const SLEEVELENGTHS = ["short", "medium", "long"] as const;
+const TOP_TYPES_FIXED = [
+  "t-shirt",
+  "shirt",
+  "blouse",
+  "cardigan",
+  "sweater",
+  "hoodie",
+  "dress",
+  "vest",
+] as const;
+const BOTTOM_TYPES_FIXED = [
+  "pants",
+  "jeans",
+  "shorts",
+  "sweatpants",
+  "skirt",
+  "leggins",
+] as const;
+const SHOES_TYPES_FIXED = [
+  "sneakers",
+  "sandals",
+  "boots",
+  "heels",
+  "flats",
+  "slippers",
+] as const;
+const JACKET_TYPES_FIXED = [
+  "blazer",
+  "denim",
+  "puffer",
+  "parka",
+  "overcoat",
+  "trenchcoat",
+  "raincoat",
+  "windbreaker",
+] as const;
+const JEWLERY_TYPES_FIXED = [
+  "earrings",
+  "necklace",
+  "bracelet",
+  "rings",
+  "watch",
+] as const;
+const SLEEVELENGTHS_FIXED = ["short", "medium", "long"] as const;
 
+// Generic UI class helpers
 const cardClass =
   "rounded-xl border bg-white/90 backdrop-blur p-5 shadow-sm border-gray-200 dark:bg-white/5 dark:border-white/10";
 const pillMuted =
@@ -64,6 +120,7 @@ const inputClass =
 const buttonPrimary =
   "inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed";
 
+// Unified shape used to merge subtype data onto items for display/edit
 type SubtypeView = {
   type?: string | null;
   sleevelength?: "short" | "long" | null;
@@ -71,6 +128,7 @@ type SubtypeView = {
 };
 
 // ---------- Create form state ----------
+// Isolates all "create new item" form fields + a reset helper.
 function useCreateState() {
   const [category, setCategory] = useState<Item["category"]>("top");
   const [description, setDescription] = useState("");
@@ -112,6 +170,7 @@ function useCreateState() {
     setHeel,
     file,
     setFile,
+    // Reset all create form fields back to defaults
     reset: () => {
       setCategory("top");
       setDescription("");
@@ -131,21 +190,24 @@ function useCreateState() {
 export default function ItemsPage() {
   const supabase = supabaseBrowser();
 
-  // base items + merged subtype fields for visning
+  // Base items + merged subtype fields for display
   const [items, setItems] = useState<Item[]>([]);
   const [subtypes, setSubtypes] = useState<Record<string, SubtypeView>>({});
   const [loading, setLoading] = useState(false);
 
+  // Create form state hook
   const c = useCreateState();
 
-  // Edit state
+  // Edit state (track item being edited + edit form fields)
   const [editId, setEditId] = useState<string | null>(null);
 
+  // Active item object for the current edit (derived)
   const editingItem = useMemo(
     () => items.find((i) => i.id === editId) ?? null,
     [items, editId]
   );
 
+  // Individual edit controls for the selected item
   const [eCategory, setECategory] = useState<Item["category"]>("top");
   const [eDescription, setEDescription] = useState("");
   const [eColor, setEColor] = useState("");
@@ -154,12 +216,18 @@ export default function ItemsPage() {
   const [eShade, setEShade] = useState<string | null>(null);
   const [eStatement, setEStatement] = useState(false);
   const [eType, setEType] = useState("");
-  const [eSleevelength, setESleevelength] = useState<"short" | "long" | null>(null);
+  const [eSleevelength, setESleevelength] = useState<"short" | "long" | null>(
+    null
+  );
   const [eHeel, setEHeel] = useState<boolean>(false);
   const [eFile, setEFile] = useState<File | null>(null);
 
-
   /* -------------- LOAD ITEMS -------------- */
+  /**
+   * Fetches all items from the "item" table, sorted by created_at (desc).
+   * Then loads subtype rows for each category and merges them into a lookup map.
+   * Populates both items[] and subtypes{} state.
+   */
   async function loadItems() {
     setLoading(true);
     try {
@@ -172,6 +240,7 @@ export default function ItemsPage() {
       const base = (rows ?? []) as Item[];
       setItems(base);
 
+      // Collect IDs per category to batch-query subtype tables
       const idsTop = base.filter((i) => i.category === "top").map((i) => i.id);
       const idsBottom = base
         .filter((i) => i.category === "bottom")
@@ -186,6 +255,7 @@ export default function ItemsPage() {
         .filter((i) => i.category === "jewelry")
         .map((i) => i.id);
 
+      // Batch-load subtypes for present IDs (skip empty sets)
       const [tops, bottoms, jackets, shoes, jewelry] = await Promise.all([
         idsTop.length
           ? supabase
@@ -219,28 +289,29 @@ export default function ItemsPage() {
           : { data: [] },
       ] as any);
 
+      // Build a merged subtype lookup by item_id
       const map: Record<string, SubtypeView> = {};
-      (tops.data ?? []).forEach((r: TopRow) => {
+      (tops.data ?? []).forEach((r: Top) => {
         map[r.item_id] = {
           ...(map[r.item_id] || {}),
           type: r.type,
           sleevelength: r.sleevelength,
         };
       });
-      (bottoms.data ?? []).forEach((r: BottomRow) => {
+      (bottoms.data ?? []).forEach((r: Bottom) => {
         map[r.item_id] = { ...(map[r.item_id] || {}), type: r.type };
       });
-      (jackets.data ?? []).forEach((r: JacketRow) => {
+      (jackets.data ?? []).forEach((r: Jacket) => {
         map[r.item_id] = { ...(map[r.item_id] || {}), type: r.type };
       });
-      (shoes.data ?? []).forEach((r: ShoeRow) => {
+      (shoes.data ?? []).forEach((r: Shoe) => {
         map[r.item_id] = {
           ...(map[r.item_id] || {}),
           type: r.type,
           heel: r.heel,
         };
       });
-      (jewelry.data ?? []).forEach((r: JewelryRow) => {
+      (jewelry.data ?? []).forEach((r: Jewelry) => {
         map[r.item_id] = { ...(map[r.item_id] || {}), type: r.type };
       });
 
@@ -253,13 +324,19 @@ export default function ItemsPage() {
     }
   }
 
+  // Initial load on mount
   useEffect(() => {
     loadItems();
   }, []);
 
-
-
   /* ---------------- CREATE ---------------- */
+  /**
+   * Creates a new Item:
+   * 1) Optionally uploads an image to Supabase Storage and stores the public URL.
+   * 2) Inserts a base row into "item" (owner_id taken from current user).
+   * 3) Inserts into the matching subtype table (except hairclip).
+   * 4) Resets the form and refreshes the list.
+   */
   async function onCreate() {
     setLoading(true);
     try {
@@ -287,7 +364,7 @@ export default function ItemsPage() {
         image_url = pub.publicUrl;
       }
 
-      // 1) Insert i item
+      // 1) Insert into item
       const { data: newItem, error: insErr } = await supabase
         .from("item")
         .insert({
@@ -307,7 +384,7 @@ export default function ItemsPage() {
       if (insErr) throw insErr;
       const itemId = newItem!.id as string;
 
-      // 2) Insert i relevant under-tabel
+      // 2) Insert into relevant subtype table
       switch (c.category) {
         case "top": {
           const { error } = await supabase.from("top").insert({
@@ -352,11 +429,12 @@ export default function ItemsPage() {
           break;
         }
         case "hairclip": {
-          // ingen type-tabel for hairclip
+          // No subtype table for hairclip
           break;
         }
       }
 
+      // Reset form and reload list
       c.reset();
       await loadItems();
     } catch (e: any) {
@@ -367,9 +445,11 @@ export default function ItemsPage() {
     }
   }
 
-
-
   /* ---------------- EDIT ---------------- */
+  /**
+   * startEdit
+   * - Loads the selected item and its cached subtype fields into edit state.
+   */
   function startEdit(item: Item) {
     setEditId(item.id);
     setECategory(item.category);
@@ -380,7 +460,7 @@ export default function ItemsPage() {
     setEShade(item.shade ?? null);
     setEStatement(!!item.statement_piece);
 
-    // preload subtype fra cache
+    // preload subtype from cache
     const s = subtypes[item.id] || {};
     setEType(s.type ?? "");
     setESleevelength((s.sleevelength as "short" | "long" | null) ?? null);
@@ -389,11 +469,22 @@ export default function ItemsPage() {
     setEFile(null);
   }
 
+  /**
+   * cancelEdit
+   * - Clears edit state and discards any pending image selection.
+   */
   function cancelEdit() {
     setEditId(null);
     setEFile(null);
   }
 
+  /**
+   * saveEdit
+   * - Optionally replaces the image (removes old storage file if present).
+   * - Updates base item fields in "item".
+   * - Upserts the subtype record in the appropriate table.
+   * - Reloads the list and exits edit mode.
+   */
   async function saveEdit() {
     if (!editId) return;
     setLoading(true);
@@ -401,6 +492,7 @@ export default function ItemsPage() {
       let newImageUrl: string | null | undefined = undefined;
       let newImagePath: string | null | undefined = undefined;
 
+      // If a new image was picked, delete old file and upload the new one
       if (eFile) {
         const { data: one } = await supabase
           .from("item")
@@ -422,7 +514,7 @@ export default function ItemsPage() {
         newImageUrl = pub.publicUrl;
       }
 
-      // 1) Update item
+      // 1) Update the base item row
       const updateItem: any = {
         category: eCategory,
         description: eDescription || null,
@@ -441,19 +533,17 @@ export default function ItemsPage() {
         .eq("id", editId);
       if (upErr) throw upErr;
 
-      // 2) Update subtype
+      // 2) Upsert subtype record for the selected category
       switch (eCategory) {
         case "top": {
-          const { error } = await supabase
-            .from("top")
-            .upsert(
-              {
-                item_id: editId,
-                type: eType || null,
-                sleevelength: eSleevelength ?? null,
-              },
-              { onConflict: "item_id" }
-            );
+          const { error } = await supabase.from("top").upsert(
+            {
+              item_id: editId,
+              type: eType || null,
+              sleevelength: eSleevelength ?? null,
+            },
+            { onConflict: "item_id" }
+          );
           if (error) throw error;
           break;
         }
@@ -498,7 +588,7 @@ export default function ItemsPage() {
           break;
         }
         case "hairclip": {
-          // intet
+          // No subtype table for hairclip
           break;
         }
       }
@@ -513,9 +603,12 @@ export default function ItemsPage() {
     }
   }
 
-
-  
   /* ---------------- DELETE ---------------- */
+  /**
+   * onDelete
+   * - Confirms with the user, removes the item row, deletes the stored image file (if any),
+   *   then refreshes the list.
+   */
   async function onDelete(id: string) {
     if (!confirm("Delete item?")) return;
     setLoading(true);
@@ -541,26 +634,37 @@ export default function ItemsPage() {
     }
   }
 
-  // Type options:
+  // Type options derived for current category (create form)
   const currentTypeOptions =
-    c.category === "top" ? [...TOP_TYPES_FIXED]
-      : c.category === "bottom" ? [...BOTTOM_TYPES_FIXED]
-      : c.category === "jacket" ? [...JACKET_TYPES_FIXED]
-      : c.category === "shoes" ? [...SHOES_TYPES_FIXED]
-      : c.category === "jewelry" ? [...JEWLERY_TYPES_FIXED]
+    c.category === "top"
+      ? [...TOP_TYPES_FIXED]
+      : c.category === "bottom"
+      ? [...BOTTOM_TYPES_FIXED]
+      : c.category === "jacket"
+      ? [...JACKET_TYPES_FIXED]
+      : c.category === "shoes"
+      ? [...SHOES_TYPES_FIXED]
+      : c.category === "jewelry"
+      ? [...JEWLERY_TYPES_FIXED]
       : [];
 
+  // Type options derived for edit form based on selected edit category
   const editTypeOptions =
-    eCategory === "top" ? [...TOP_TYPES_FIXED]
-      : eCategory === "bottom" ? [...BOTTOM_TYPES_FIXED]
-      : eCategory === "jacket" ? [...JACKET_TYPES_FIXED]
-      : eCategory === "shoes" ? [...SHOES_TYPES_FIXED]
-      : eCategory === "jewelry" ? [...JEWLERY_TYPES_FIXED]
+    eCategory === "top"
+      ? [...TOP_TYPES_FIXED]
+      : eCategory === "bottom"
+      ? [...BOTTOM_TYPES_FIXED]
+      : eCategory === "jacket"
+      ? [...JACKET_TYPES_FIXED]
+      : eCategory === "shoes"
+      ? [...SHOES_TYPES_FIXED]
+      : eCategory === "jewelry"
+      ? [...JEWLERY_TYPES_FIXED]
       : [];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 relative">
-      {/* Navbar */}
+      {/* Navbar: back button, centered logo, and link to generator */}
       <nav className="flex items-center justify-between px-2 py-4 mb-8 border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-gray-900/80 sticky top-0 z-10 rounded-xl">
         <Link href="/">
           <button className="rounded-lg px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition">
@@ -581,11 +685,12 @@ export default function ItemsPage() {
         </Link>
       </nav>
 
+      {/* Page title */}
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
         Items
       </h1>
 
-      {/* CREATE */}
+      {/* CREATE: Form for adding a new item and optional image */}
       <section className={`${cardClass} mt-6`}>
         <div className="grid gap-4 md:grid-cols-3">
           {/* Category */}
@@ -646,7 +751,7 @@ export default function ItemsPage() {
             />
           </div>
 
-          {/* Type (ikke for hairclip) */}
+          {/* Type (not for hairclip) */}
           {c.category !== "hairclip" && (
             <div className="flex flex-col gap-1.5">
               <Label className="text-sm">Type</Label>
@@ -711,7 +816,7 @@ export default function ItemsPage() {
             </Select>
           </div>
 
-          {/* Statement piece */}
+          {/* Statement piece flag */}
           <div className="flex items-center gap-2">
             <input
               id="statement-piece"
@@ -724,7 +829,7 @@ export default function ItemsPage() {
             </Label>
           </div>
 
-          {/* Sleevelength (kun top) */}
+          {/* Sleevelength (top only) */}
           {c.category === "top" && (
             <div className="flex flex-col gap-1.5">
               <Label className="text-sm">Sleeve length</Label>
@@ -741,7 +846,7 @@ export default function ItemsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— select —</SelectItem>
-                  {SLEEVELENGTHS.map((s) => (
+                  {SLEEVELENGTHS_FIXED.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
                     </SelectItem>
@@ -751,7 +856,7 @@ export default function ItemsPage() {
             </div>
           )}
 
-          {/* Heel (kun shoes) */}
+          {/* Heel (shoes only) */}
           {c.category === "shoes" && (
             <div className="flex items-center gap-2">
               <input
@@ -766,7 +871,7 @@ export default function ItemsPage() {
             </div>
           )}
 
-          {/* Image + Save */}
+          {/* Image picker + Save */}
           <div className="md:col-span-2 flex flex-col gap-1.5">
             <Label className="text-sm">Image (optional)</Label>
             <input
@@ -788,7 +893,7 @@ export default function ItemsPage() {
         </div>
       </section>
 
-      {/* LIST + EDIT */}
+      {/* LIST + EDIT: renders each item card with inline edit form */}
       <section className="mt-6 space-y-3">
         {items.length === 0 && (
           <p className="text-sm text-gray-600 dark:text-white/70">
@@ -862,7 +967,7 @@ export default function ItemsPage() {
                 </div>
               </div>
 
-              {/* EDIT FORM */}
+              {/* EDIT FORM for the selected item */}
               {editId === i.id && (
                 <div className="mt-5 grid gap-4 md:grid-cols-3 border-t pt-5 border-gray-200 dark:border-white/10">
                   <div className="flex flex-col gap-1.5">
@@ -1015,7 +1120,7 @@ export default function ItemsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">— select —</SelectItem>
-                          {SLEEVELENGTHS.map((s) => (
+                          {SLEEVELENGTHS_FIXED.map((s) => (
                             <SelectItem key={s} value={s}>
                               {s}
                             </SelectItem>
