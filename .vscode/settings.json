@@ -6,16 +6,6 @@
       "driver": "PostgreSQL",
       "name": "OUTFIT PICKER CON"
     }
-  ],
-  "files.exclude": {
-    "**/.git": true,
-    "**/.DS_Store": true,
-    "**/node_modules": true,
-    "**/.next": true,
-    "**/out": true
-  },
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "sqltools.useNodeRuntime": true
+  ]
 }
+//aaaaaaaaaaa
