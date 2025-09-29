@@ -31,11 +31,14 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+        
+        <footer className="fixed bottom-0 mb-6 w-full flex justify-center text-sm text-gray-500 dark:text-gray-400">
+          © {new Date().getFullYear()} Outfit Picker
+        </footer>
       </body>
+      
     </html>
   );
 }

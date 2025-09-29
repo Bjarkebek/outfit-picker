@@ -10,17 +10,17 @@ export default function Home() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    // Ryd browser-session
+    // Clear browser session
     await supabase.auth.signOut();
 
-    // Fortæl serveren at rydde Supabase-cookies (så middleware ser dig som logget ud)
+    // Tell the server to clear Supabase cookies (so middleware sees you as logged out)
     await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ event: "SIGNED_OUT", session: null }),
     });
 
-    // Ny navigation (server request) → middleware kører og sender dig til /login
+    // New navigation (server request) → middleware runs and sends you to /login
     window.location.replace("/login");
   };
 
@@ -55,9 +55,7 @@ export default function Home() {
             </button>
           </Link>
         </main>
-        <footer className="mt-12 text-sm text-gray-500 dark:text-gray-400">
-          © {new Date().getFullYear()} Outfit Picker
-        </footer>
+        
       </div>
     </div>
   );

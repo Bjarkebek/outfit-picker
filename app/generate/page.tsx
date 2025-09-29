@@ -12,11 +12,17 @@ type Item = {
   id: string;
   category: "top" | "bottom" | "jacket" | "shoes" | "hairclip" | "jewelry";
   description: string | null;
-  shade?: "light" | "medium" | "dark" | null;
+  image_url: string | null;
+  image_path: string | null;
+  created_at: string;
+  color: string | null;
+  brand: string | null;
+  season: string | null;
+  shade: "light" | "medium" | "dark" | null;
+  statement_piece: boolean | null;
+  owner_id?: string | null;
   type: string | null;
-  statement_piece?: boolean | null;
-  season?: string | null;
-  active?: boolean | null;
+  active: boolean | null;
 };
 
 type Chosen = {
@@ -30,6 +36,7 @@ type Chosen = {
     | "jewelry";
   id: string;
   desc: string;
+  brand?: string;
 };
 
 // ------- STYLE HEURISTICS -------
@@ -51,20 +58,20 @@ function styleOf(item: Item): "casual" | "smart" | "formal" {
     if (TOP_FORMAL.has(t)) return "formal";
     if (TOP_SMART.has(t)) return "smart";
     if (TOP_CASUAL.has(t)) return "casual";
-    return "smart";
+    return "casual"; // default for unknown tops
   }
   if (item.category === "bottom") {
     if (BOTTOM_SMART.has(t)) return "smart";
     if (BOTTOM_CASUAL.has(t)) return "casual";
-    return "smart";
+    return "casual"; // default for unknown bottoms
   }
   if (item.category === "shoes") {
     if (SHOES_FORMAL.has(t)) return "formal";
     if (SHOES_SMART.has(t)) return "smart";
     if (SHOES_CASUAL.has(t)) return "casual";
-    return "smart";
+    return "casual"; // default for unknown shoes
   }
-  return "smart";
+  return "casual"; // default fallback
 }
 
 function compatible(
@@ -103,11 +110,13 @@ function pickIn(
 }
 
 export default function Generate() {
-  const supabase = supabaseBrowser(); // ✅ use browser client with session
+  const supabase = supabaseBrowser(); // use browser client with session
   const [roles, setRoles] = useState<Chosen[]>([]);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
+
+  // Main generation logic
   const generate = async () => {
     setBusy(true);
     setSaved(false);
@@ -128,7 +137,7 @@ export default function Generate() {
     const { data, error } = await supabase
       .from("item")
       .select("*")
-      .eq("active", true); // fjern denne hvis dine seed-data ikke har active=true
+      .eq("active", true);
 
     if (error) {
       console.error("load items error", error);
@@ -139,7 +148,7 @@ export default function Generate() {
     const items = (data ?? []) as Item[];
     if (items.length === 0) {
       alert(
-        "Ingen aktive items fundet. Tilføj items (eller sæt active=true) og prøv igen."
+        "Ingen aktive items fundet. Tilføj items og prøv igen."
       );
       setRoles([]);
       setBusy(false);
@@ -161,7 +170,8 @@ export default function Generate() {
         chosen.push({
           role: "dress",
           id: dress.id,
-          desc: dress.description ?? "Kjole",
+          desc: dress.description ?? "Dress",
+          brand: dress.brand ?? "No brand",
         });
         avoid.add(dress.id);
 
@@ -178,6 +188,7 @@ export default function Generate() {
             role: "shoes",
             id: shoes.id,
             desc: shoes.description ?? "Shoes",
+            brand: shoes.brand ?? "No brand",
           });
           avoid.add(shoes.id);
         }
@@ -190,6 +201,7 @@ export default function Generate() {
             role: "jewelry",
             id: jewelry.id,
             desc: jewelry.description ?? "Jewelry",
+            brand: jewelry.brand ?? "No brand",
           });
           avoid.add(jewelry.id);
         }
@@ -201,6 +213,7 @@ export default function Generate() {
               role: "hairclip",
               id: clip.id,
               desc: clip.description ?? "Hairclip",
+              brand: clip.brand ?? "No brand",
             });
             avoid.add(clip.id);
           }
@@ -219,6 +232,7 @@ export default function Generate() {
           role: "top",
           id: top.id,
           desc: top.description ?? "Top",
+          brand: top.brand ?? "No brand",
         });
         avoid.add(top.id);
       }
@@ -244,6 +258,7 @@ export default function Generate() {
           role: "bottom",
           id: bottom.id,
           desc: bottom.description ?? "Bottom",
+          brand: bottom.brand ?? "No brand",
         });
         avoid.add(bottom.id);
       }
@@ -267,6 +282,7 @@ export default function Generate() {
           role: "shoes",
           id: shoes.id,
           desc: shoes.description ?? "Shoes",
+          brand: shoes.brand ?? "No brand",
         });
         avoid.add(shoes.id);
       }
@@ -277,6 +293,7 @@ export default function Generate() {
           role: "jewelry",
           id: jewelry.id,
           desc: jewelry.description ?? "Jewelry",
+          brand: jewelry.brand ?? "No brand",
         });
         avoid.add(jewelry.id);
       }
@@ -288,6 +305,7 @@ export default function Generate() {
             role: "hairclip",
             id: clip.id,
             desc: clip.description ?? "Hairclip",
+            brand: clip.brand ?? "No brand",
           });
           avoid.add(clip.id);
         }
@@ -344,13 +362,16 @@ export default function Generate() {
     const finalChosen = withItems.map(({ item, ...rest }) => rest);
     if (finalChosen.length === 0) {
       alert(
-        "Kunne ikke sammensætte et outfit ud fra dine items. Tilføj flere eller justér reglerne."
+        "Kunne ikke sammensætte et outfit ud fra dine items. Tilføj flere items."
       );
     }
     setRoles(finalChosen);
     setBusy(false);
   };
 
+
+
+  // Save generated outfit to DB
   const saveOutfit = async () => {
     if (roles.length === 0) return;
 
@@ -399,6 +420,9 @@ export default function Generate() {
     setSaved(true);
   };
 
+
+
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 relative">
       {/* navbar */}
@@ -445,7 +469,12 @@ export default function Generate() {
         <ul className="mt-4 space-y-2">
           {roles.map((r) => (
             <li key={r.role} className="border p-3 rounded">
-              <b>{r.role}</b> — {r.desc}
+              <ul>
+                  <b>{r.role}:</b>
+              </ul> 
+              <ul>
+                  {r.desc} — {r.brand}
+              </ul>
             </li>
           ))}
         </ul>
