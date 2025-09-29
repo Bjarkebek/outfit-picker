@@ -5,7 +5,6 @@
             "server": "localhost",
             "driver": "PostgreSQL",
             "name": "OUTFIT PICKER CON",
-            "connectString": "postgresql://postgres.ussdueuinpirojurhlgx:Iaxzm9EwHQ5aecPT@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
         }
     ]
 }
