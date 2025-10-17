@@ -129,9 +129,7 @@ export default function ItemsPage() {
   const [eShade, setEShade] = useState<string | null>(null);
   const [eStatement, setEStatement] = useState(false);
   const [eType, setEType] = useState("");
-  const [eSleevelength, setESleevelength] = useState<SleeveLength | null>(
-    null
-  );
+  const [eSleevelength, setESleevelength] = useState<SleeveLength | null>(null);
   const [eHeel, setEHeel] = useState<boolean>(false);
   const [eFile, setEFile] = useState<File | null>(null);
   const [eBundle, setEBundle] = useState<string | null>(null);
@@ -403,8 +401,7 @@ export default function ItemsPage() {
 
 
   /* ---------------- EDIT ---------------- */
-  /**
-   * startEdit
+  /**  startEdit
    * - Loads the selected item and its cached subtype fields into edit state.
    */
   function startEdit(item: Item) {
@@ -427,8 +424,7 @@ export default function ItemsPage() {
     
   }
 
-  /**
-   * cancelEdit
+  /**  cancelEdit
    * - Clears edit state and discards any pending image selection.
    */
   function cancelEdit() {
@@ -436,8 +432,7 @@ export default function ItemsPage() {
     setEFile(null);
   }
 
-  /**
-   * saveEdit
+  /**  saveEdit
    * - Optionally replaces the image (removes old storage file if present).
    * - Updates base item fields in "item".
    * - Upserts the subtype record in the appropriate table.
@@ -567,11 +562,8 @@ export default function ItemsPage() {
 
 
 
-
-
   /* ---------------- DELETE ---------------- */
-  /**
-   * onDelete
+  /**  onDelete
    * - Confirms with the user, removes the item row, deletes the stored image file (if any),
    *   then refreshes the list.
    */
@@ -717,7 +709,7 @@ export default function ItemsPage() {
             />
           </div>
 
-          {/* Type (not for hairclip) */}
+          {/* Type */}
           {c.category !== "hairclip" && (
             <div className="flex flex-col gap-1.5">
               <Label className="text-sm">Type</Label>
@@ -1032,10 +1024,7 @@ export default function ItemsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">— select —</SelectItem>
-                          {(eCategory === "top"
-                            ? [...TOP_TYPES]
-                            : []
-                          ).map((t) => (
+                          {editTypeOptions.map((t) => (
                             <SelectItem key={t} value={t}>
                               {t}
                             </SelectItem>
