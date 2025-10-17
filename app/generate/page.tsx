@@ -6,21 +6,10 @@ import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase-browser"; // ✅ browser client
 import Image from "next/image";
 import Link from "next/link";
+import type { Item as ItemBase } from "@/Models/item";
 
-// DB item type (a few optional fields used by heuristics)
-type Item = {
-  id: string;
-  category: "top" | "bottom" | "jacket" | "shoes" | "hairclip" | "jewelry";
-  description: string | null;
-  image_url: string | null;
-  image_path: string | null;
-  created_at: string;
-  color: string | null;
-  brand: string | null;
-  season: string | null;
-  shade: "light" | "medium" | "dark" | null;
-  statement_piece: boolean | null;
-  owner_id?: string | null;
+// Extend the base Item with fields this page reads from joins/queries
+type Item = ItemBase & {
   type: string | null;
   active: boolean | null;
 };
@@ -245,7 +234,6 @@ export default function Generate() {
             items,
             "bottom",
             (b) => {
-              if (top.shade && b.shade && top.shade === b.shade) return false;
               return compatible(topStyle, styleOf(b));
             },
             avoid

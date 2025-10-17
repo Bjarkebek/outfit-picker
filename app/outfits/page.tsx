@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import type { Category } from "@/Models/item";
+import { SEASONS, CATEGORIES } from "@/Models/item";
+import { OUTFIT_TYPES } from "@/Models/outfit";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -13,15 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cardClass, inputClass, pillMuted, buttonPrimary, buttonSub } from "@/lib/ui"; // Generic UI class helpers
 
 type ItemBase = {
   id: string;
-  category: "top" | "bottom" | "jacket" | "shoes" | "hairclip" | "jewelry";
+  category: Category;
   description: string | null;
   image_url: string | null;
-  shade: "light" | "medium" | "dark" | null;
   statement_piece: boolean | null;
-  season: string | null;
 };
 
 type Outfit = {
@@ -41,20 +43,6 @@ type OutfitItemView = {
     category: ItemBase["category"];
   };
 };
-
-const cardClass =
-  "rounded-xl border bg-white/90 backdrop-blur p-5 shadow-sm border-gray-200 dark:bg-white/5 dark:border-white/10";
-const inputClass =
-  "w-full rounded-lg px-3 py-2 border transition focus:outline-none focus:ring-2 bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-400";
-const pillMuted =
-  "text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-white/80";
-const buttonPri =
-  "inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed";
-const buttonSub =
-  "rounded-lg px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15";
-
-const SEASONS = ["spring", "summer", "autumn", "winter", "all-season"] as const;
-const OUTFIT_TYPES = ["casual", "smart", "formal"] as const;
 
 export default function OutfitsPage() {
   const supabase = supabaseBrowser();
@@ -101,28 +89,28 @@ export default function OutfitsPage() {
   async function loadAll() {
     setLoading(true);
     try {
-      const { data: os } = await supabase
+      const { data: outfits } = await supabase
         .from("outfit")
         .select("id, description, type, season, created_at")
         .order("created_at", { ascending: false });
-      setOutfits(os ?? []);
+      setOutfits(outfits ?? []);
 
-      const { data: its } = await supabase
+      const { data: items } = await supabase
         .from("item")
         .select(
-          "id, category, description, image_url, shade, statement_piece, season"
+          "id, category, description, image_url, statement_piece"
         )
         .order("created_at", { ascending: false });
-      setItems((its ?? []) as ItemBase[]);
+      setItems((items ?? []) as ItemBase[]);
 
       const outMap: Record<string, OutfitItemView[]> = {};
-      for (const o of os ?? []) {
+      for (const outfit of outfits ?? []) {
         const { data: rows, error: relErr } = await supabase
           .from("outfititem")
           // use the foreign table name (item), not the local FK column (item_id)
           // this returns a single nested object at r.item
           .select("role, item_id, item:item(description, image_url, category)")
-          .eq("outfit_id", o.id);
+          .eq("outfit_id", outfit.id);
 
         if (relErr) console.error(relErr);
 
@@ -136,7 +124,7 @@ export default function OutfitsPage() {
           },
         }));
 
-        outMap[o.id] = normalized;
+        outMap[outfit.id] = normalized;
       }
       setItemsByOutfit(outMap);
     } finally {
@@ -772,7 +760,7 @@ export default function OutfitsPage() {
 
         <div className="mt-4">
           <button
-            className={buttonPri}
+            className={buttonPrimary}
             onClick={createOutfit}
             disabled={loading}
           >
@@ -874,7 +862,7 @@ export default function OutfitsPage() {
                   </div>
 
                   <div className="flex gap-2 mb-4">
-                    <button className={buttonPri} onClick={saveEdit}>
+                    <button className={buttonPrimary} onClick={saveEdit}>
                       Gem ændringer
                     </button>
                     <button className={buttonSub} onClick={cancelEdit}>
@@ -899,16 +887,7 @@ export default function OutfitsPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {(
-                            [
-                              "top",
-                              "bottom",
-                              "shoes",
-                              "jacket",
-                              "jewelry",
-                              "hairclip",
-                            ] as ItemBase["category"][]
-                          ).map((cg) => (
+                          {CATEGORIES.map((cg) => (
                             <SelectItem key={cg} value={cg}>
                               {cg}
                             </SelectItem>
