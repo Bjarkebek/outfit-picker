@@ -12,9 +12,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Image from "next/image";
 import Link from "next/link";
+
 import { cardClass, pillMuted, inputClass, buttonPrimary } from "@/lib/ui"; // Generic UI class helpers
 
 // Item imports
@@ -22,9 +29,23 @@ import type { Item } from "@/Models/item";
 import { CATEGORIES, SEASONS, SHADES } from "@/Models/item";
 
 // Subtype imports
-import type { Top, Bottom, Jacket, Shoe, Jewelry, SleeveLength } from "@/Models/subtypes";
-import { TOP_TYPES, BOTTOM_TYPES, JACKET_TYPES, SHOE_TYPES, JEWELRY_TYPES, SLEEVELENGTHS, JEWELRY_BUNDLES,} from "@/Models/subtypes";
-
+import type {
+  Top,
+  Bottom,
+  Jacket,
+  Shoe,
+  Jewelry,
+  SleeveLength,
+} from "@/Models/subtypes";
+import {
+  TOP_TYPES,
+  BOTTOM_TYPES,
+  JACKET_TYPES,
+  SHOE_TYPES,
+  JEWELRY_TYPES,
+  SLEEVELENGTHS,
+  JEWELRY_BUNDLES,
+} from "@/Models/subtypes";
 
 // Unified shape used to merge subtype data onto items for display/edit
 type SubtypeView = {
@@ -35,7 +56,6 @@ type SubtypeView = {
   season?: string | null;
   shade?: string | null;
 };
-
 
 // ---------- Create form state ----------
 // Isolates all "create new item" form fields + a reset helper.
@@ -171,44 +191,45 @@ export default function ItemsPage() {
         .map((i) => i.id);
 
       // Batch-load subtypes for present IDs (skip empty sets)
-      const [tops, bottoms, jackets, shoes, jewelry, hairclips] = await Promise.all([
-        idsTop.length
-          ? supabase
-              .from("top")
-              .select("item_id,type,sleevelength,season,shade")
-              .in("item_id", idsTop)
-          : { data: [] },
-        idsBottom.length
-          ? supabase
-              .from("bottom")
-              .select("item_id,type,season,shade")
-              .in("item_id", idsBottom)
-          : { data: [] },
-        idsJacket.length
-          ? supabase
-              .from("jacket")
-              .select("item_id,type,season,shade")
-              .in("item_id", idsJacket)
-          : { data: [] },
-        idsShoes.length
-          ? supabase
-              .from("shoe")
-              .select("item_id,type,heel,season,shade")
-              .in("item_id", idsShoes)
-          : { data: [] },
-        idsJewelry.length
-          ? supabase
-              .from("jewelry")
-              .select("id,type,bundle_id,item_id")
-              .in("id", idsJewelry)
-          : { data: [] },
-        idsHairclip.length
-          ? supabase
-              .from("hairclip")
-              .select("item_id,shade")
-              .in("item_id", idsHairclip)
-          : { data: [] },
-      ] as any);
+      const [tops, bottoms, jackets, shoes, jewelry, hairclips] =
+        await Promise.all([
+          idsTop.length
+            ? supabase
+                .from("top")
+                .select("item_id,type,sleevelength,season,shade")
+                .in("item_id", idsTop)
+            : { data: [] },
+          idsBottom.length
+            ? supabase
+                .from("bottom")
+                .select("item_id,type,season,shade")
+                .in("item_id", idsBottom)
+            : { data: [] },
+          idsJacket.length
+            ? supabase
+                .from("jacket")
+                .select("item_id,type,season,shade")
+                .in("item_id", idsJacket)
+            : { data: [] },
+          idsShoes.length
+            ? supabase
+                .from("shoe")
+                .select("item_id,type,heel,season,shade")
+                .in("item_id", idsShoes)
+            : { data: [] },
+          idsJewelry.length
+            ? supabase
+                .from("jewelry")
+                .select("id,type,bundle_id,item_id")
+                .in("id", idsJewelry)
+            : { data: [] },
+          idsHairclip.length
+            ? supabase
+                .from("hairclip")
+                .select("item_id,shade")
+                .in("item_id", idsHairclip)
+            : { data: [] },
+        ] as any);
 
       // Build a merged subtype lookup by item_id
       const map: Record<string, SubtypeView> = {};
@@ -266,9 +287,6 @@ export default function ItemsPage() {
   useEffect(() => {
     loadItems();
   }, []);
-
-
-
 
   /* ---------------- CREATE ---------------- */
   /**
@@ -397,9 +415,6 @@ export default function ItemsPage() {
     }
   }
 
-
-
-
   /* ---------------- EDIT ---------------- */
   /**  startEdit
    * - Loads the selected item and its cached subtype fields into edit state.
@@ -410,18 +425,17 @@ export default function ItemsPage() {
     setEDescription(item.description ?? "");
     setEColor(item.color ?? "");
     setEBrand(item.brand ?? "");
-  const s = subtypes[item.id] || {};
-  setESeason(s.season ?? null);
-  setEShade(s.shade ?? null);
+    const s = subtypes[item.id] || {};
+    setESeason(s.season ?? null);
+    setEShade(s.shade ?? null);
     setEStatement(!!item.statement_piece);
 
-  // preload subtype from cache (remaining fields)
+    // preload subtype from cache (remaining fields)
     setEType(s.type ?? "");
     setESleevelength((s.sleevelength as SleeveLength | null) ?? null);
     setEHeel(!!s.heel);
 
     setEFile(null);
-    
   }
 
   /**  cancelEdit
@@ -504,7 +518,12 @@ export default function ItemsPage() {
           const { error } = await supabase
             .from("bottom")
             .upsert(
-              { item_id: editId, type: eType || null, season: eSeason ?? null, shade: eShade ?? null },
+              {
+                item_id: editId,
+                type: eType || null,
+                season: eSeason ?? null,
+                shade: eShade ?? null,
+              },
               { onConflict: "item_id" }
             );
           if (error) throw error;
@@ -514,7 +533,12 @@ export default function ItemsPage() {
           const { error } = await supabase
             .from("jacket")
             .upsert(
-              { item_id: editId, type: eType || null, season: eSeason ?? null, shade: eShade ?? null },
+              {
+                item_id: editId,
+                type: eType || null,
+                season: eSeason ?? null,
+                shade: eShade ?? null,
+              },
               { onConflict: "item_id" }
             );
           if (error) throw error;
@@ -524,7 +548,13 @@ export default function ItemsPage() {
           const { error } = await supabase
             .from("shoe")
             .upsert(
-              { item_id: editId, type: eType || null, heel: eHeel, season: eSeason ?? null, shade: eShade ?? null },
+              {
+                item_id: editId,
+                type: eType || null,
+                heel: eHeel,
+                season: eSeason ?? null,
+                shade: eShade ?? null,
+              },
               { onConflict: "item_id" }
             );
           if (error) throw error;
@@ -534,7 +564,11 @@ export default function ItemsPage() {
           const { error } = await supabase
             .from("jewelry")
             .upsert(
-              { item_id: editId, type: eType || null, bundle_id: eBundle || null },
+              {
+                item_id: editId,
+                type: eType || null,
+                bundle_id: eBundle || null,
+              },
               { onConflict: "item_id" }
             );
           if (error) throw error;
@@ -543,7 +577,10 @@ export default function ItemsPage() {
         case "hairclip": {
           const { error } = await supabase
             .from("hairclip")
-            .upsert({ item_id: editId, shade: eShade ?? null }, { onConflict: "item_id" });
+            .upsert(
+              { item_id: editId, shade: eShade ?? null },
+              { onConflict: "item_id" }
+            );
           if (error) throw error;
           break;
         }
@@ -558,9 +595,6 @@ export default function ItemsPage() {
       setLoading(false);
     }
   }
-
-
-
 
   /* ---------------- DELETE ---------------- */
   /**  onDelete
@@ -733,7 +767,10 @@ export default function ItemsPage() {
           )}
 
           {/* Season */}
-          {(c.category === "top" || c.category === "bottom" || c.category === "jacket" || c.category === "shoes") && (
+          {(c.category === "top" ||
+            c.category === "bottom" ||
+            c.category === "jacket" ||
+            c.category === "shoes") && (
             <div className="flex flex-col gap-1.5">
               <Label className="text-sm">Season</Label>
               <Select
@@ -756,7 +793,11 @@ export default function ItemsPage() {
           )}
 
           {/* Shade */}
-          {(c.category === "top" || c.category === "bottom" || c.category === "jacket" || c.category === "shoes" || c.category === "hairclip") && (
+          {(c.category === "top" ||
+            c.category === "bottom" ||
+            c.category === "jacket" ||
+            c.category === "shoes" ||
+            c.category === "hairclip") && (
             <div className="flex flex-col gap-1.5">
               <Label className="text-sm">Shade</Label>
               <Select
@@ -798,9 +839,7 @@ export default function ItemsPage() {
               <Select
                 value={c.sleevelength ?? "none"}
                 onValueChange={(v) =>
-                  c.setSleevelength(
-                    v === "none" ? null : (v as SleeveLength)
-                  )
+                  c.setSleevelength(v === "none" ? null : (v as SleeveLength))
                 }
               >
                 <SelectTrigger className="w-full">
@@ -922,7 +961,7 @@ export default function ItemsPage() {
                         <span className={pillMuted}>{s.sleevelength}</span>
                       )}
                       {i.category === "jewelry" && s.bundle_id && (
-                          <span className={pillMuted}>bundle: {s.bundle_id}</span>
+                        <span className={pillMuted}>bundle: {s.bundle_id}</span>
                       )}
                       {i.category === "shoes" && s.heel !== undefined && (
                         <span className={pillMuted}>
@@ -938,19 +977,20 @@ export default function ItemsPage() {
                   </div>
                 </div>
 
-
                 <div className="flex gap-3">
                   <button
                     className="rounded-lg px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15"
                     onClick={() => startEdit(i)}
-                    disabled={loading}>
+                    disabled={loading}
+                  >
                     Edit
                   </button>
 
                   <button
                     className="text-red-600 dark:text-red-400 hover:underline"
                     onClick={() => onDelete(i.id)}
-                    disabled={loading}>
+                    disabled={loading}
+                  >
                     Delete
                   </button>
                 </div>
@@ -1035,12 +1075,17 @@ export default function ItemsPage() {
                   )}
 
                   {/* Season */}
-                  {(eCategory === "top" || eCategory === "bottom" || eCategory === "jacket" || eCategory === "shoes") && (
+                  {(eCategory === "top" ||
+                    eCategory === "bottom" ||
+                    eCategory === "jacket" ||
+                    eCategory === "shoes") && (
                     <div className="flex flex-col gap-1.5">
                       <Label className="text-sm">Season</Label>
                       <Select
                         value={eSeason ?? "none"}
-                        onValueChange={(v) => setESeason(v === "none" ? null : v)}
+                        onValueChange={(v) =>
+                          setESeason(v === "none" ? null : v)
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="— select —" />
@@ -1058,12 +1103,18 @@ export default function ItemsPage() {
                   )}
 
                   {/* Shade */}
-                  {(eCategory === "top" || eCategory === "bottom" || eCategory === "jacket" || eCategory === "shoes" || eCategory === "hairclip") && (
+                  {(eCategory === "top" ||
+                    eCategory === "bottom" ||
+                    eCategory === "jacket" ||
+                    eCategory === "shoes" ||
+                    eCategory === "hairclip") && (
                     <div className="flex flex-col gap-1.5">
                       <Label className="text-sm">Shade</Label>
                       <Select
                         value={eShade ?? "none"}
-                        onValueChange={(v) => setEShade(v === "none" ? null : v)}
+                        onValueChange={(v) =>
+                          setEShade(v === "none" ? null : v)
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="— select —" />
@@ -1141,7 +1192,9 @@ export default function ItemsPage() {
                       <Label className="text-sm">Bundle</Label>
                       <Select
                         value={c.bundleValue ?? "none"}
-                        onValueChange={(v) => c.setBundleValue(v === "none" ? null : v)}
+                        onValueChange={(v) =>
+                          c.setBundleValue(v === "none" ? null : v)
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="— select —" />

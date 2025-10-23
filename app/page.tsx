@@ -55,7 +55,6 @@ export default function Home() {
             </button>
           </Link>
         </main>
-        
       </div>
     </div>
   );

@@ -29,7 +29,14 @@ type Chosen = {
 };
 
 // ------- STYLE HEURISTICS -------
-const TOP_CASUAL = new Set(["tshirt", "tanktop", "croptop", "hoodie", "sweater", "cardigan"]);
+const TOP_CASUAL = new Set([
+  "tshirt",
+  "tanktop",
+  "croptop",
+  "hoodie",
+  "sweater",
+  "cardigan",
+]);
 const TOP_SMART = new Set(["blouse", "shirt", "vest", "cardigan"]);
 const TOP_FORMAL = new Set(["dress"]);
 
@@ -104,7 +111,6 @@ export default function Generate() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
-
   // Main generation logic
   const generate = async () => {
     setBusy(true);
@@ -136,9 +142,7 @@ export default function Generate() {
     }
     const items = (data ?? []) as Item[];
     if (items.length === 0) {
-      alert(
-        "Ingen aktive items fundet. Tilføj items og prøv igen."
-      );
+      alert("Ingen aktive items fundet. Tilføj items og prøv igen.");
       setRoles([]);
       setBusy(false);
       return;
@@ -357,8 +361,6 @@ export default function Generate() {
     setBusy(false);
   };
 
-
-
   // Save generated outfit to DB
   const saveOutfit = async () => {
     if (roles.length === 0) return;
@@ -408,9 +410,6 @@ export default function Generate() {
     setSaved(true);
   };
 
-
-
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 relative">
       {/* navbar */}
@@ -458,10 +457,10 @@ export default function Generate() {
           {roles.map((r) => (
             <li key={r.role} className="border p-3 rounded">
               <ul>
-                  <b>{r.role}:</b>
-              </ul> 
+                <b>{r.role}:</b>
+              </ul>
               <ul>
-                  {r.desc} — {r.brand}
+                {r.desc} — {r.brand}
               </ul>
             </li>
           ))}

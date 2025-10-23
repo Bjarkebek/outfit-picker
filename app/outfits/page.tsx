@@ -16,7 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cardClass, inputClass, pillMuted, buttonPrimary, buttonSub } from "@/lib/ui"; // Generic UI class helpers
+import {
+  cardClass,
+  inputClass,
+  pillMuted,
+  buttonPrimary,
+  buttonSub,
+} from "@/lib/ui"; // Generic UI class helpers
 
 type ItemBase = {
   id: string;
@@ -97,9 +103,7 @@ export default function OutfitsPage() {
 
       const { data: items } = await supabase
         .from("item")
-        .select(
-          "id, category, description, image_url, statement_piece"
-        )
+        .select("id, category, description, image_url, statement_piece")
         .order("created_at", { ascending: false });
       setItems((items ?? []) as ItemBase[]);
 
@@ -367,14 +371,12 @@ export default function OutfitsPage() {
           // Hvis ingen sameType, tilføjer vi en ekstra top (ingen sletning)
         }
 
-        const { error: insErr } = await supabase
-          .from("outfititem")
-          .insert({
-            outfit_id: outfitId,
-            item_id: addItem,
-            role: "top",
-            position: 1,
-          });
+        const { error: insErr } = await supabase.from("outfititem").insert({
+          outfit_id: outfitId,
+          item_id: addItem,
+          role: "top",
+          position: 1,
+        });
         if (insErr) throw insErr;
 
         setAddItem("");
