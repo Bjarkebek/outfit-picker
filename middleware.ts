@@ -2,7 +2,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+
 export async function middleware(req: NextRequest) {
+
+  // Bypass alt i E2E (Playwright sætter E2E=1)
+  if (process.env.E2E === '1') {
+    return NextResponse.next();
+  }
+
   // Tillad assets uden auth
   const publicPaths = ['/login', '/favicon.ico', '/OutfitPickerLogo.png'];
   if (
