@@ -6,7 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+
+    "test-all": "vitest",
+    "test-unit": "vitest /unit",
+    "test-comp": "vitest /components",
+    "test-int": "vitest /integration",
+    "test:ci": "vitest run --coverage",
+
+    "test-e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:debug": "playwright test --debug",
+    "e2e:ci": "playwright test --reporter=line"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -24,17 +35,27 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.1.12",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest-axe": "^3.5.9",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
+    "jest-axe": "^10.0.0",
+    "jsdom": "^27.1.0",
+    "msw": "^2.11.6",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.3.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.6"
   }
 }
