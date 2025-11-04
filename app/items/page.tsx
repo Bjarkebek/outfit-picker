@@ -677,9 +677,8 @@ export default function ItemsPage() {
         </Link>
       </nav>
 
-      {/* Page title */}
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
-        Items
+        Create item
       </h1>
 
       {/* CREATE FORM: Form for adding a new item and optional image */}
@@ -917,23 +916,37 @@ export default function ItemsPage() {
         </div>
       </section>
 
+      {/* BUNDLES: To add or manage existing jewlry bundles */}
+      <h1 className="text-3xl mt-10 font-semibold tracking-tight text-gray-900 dark:text-white">
+        Bundles
+      </h1>
+      <section className={`${cardClass} mt-6`}>
+        
+      </section>
+
+
+
       {/* ITEM LIST + EDIT FORM: renders each item card with inline edit form */}
-      <section className="mt-6 space-y-3">
+      <h1 className="text-3xl mt-10 font-semibold tracking-tight text-gray-900 dark:text-white">
+        All items
+      </h1>
+
+      <section className={`${cardClass} mt-6`}>
         {items.length === 0 && (
           <p className="text-sm text-gray-600 dark:text-white/70">
             No items yet. Add the first one above.
           </p>
         )}
 
-        {items.map((i) => {
-          const s = subtypes[i.id] || {};
+        {items.map((item) => {
+          const s = subtypes[item.id] || {};
           return (
-            <div key={i.id} className={`${cardClass}`}>
+            <div key={item.id} className=" mb-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  {i.image_url ? (
+                  {item.image_url ? (
                     <img
-                      src={i.image_url}
+                      src={item.image_url}
                       alt=""
                       className="h-16 w-16 rounded-lg object-cover border border-gray-200 dark:border-white/10"
                     />
@@ -945,42 +958,50 @@ export default function ItemsPage() {
                   <div className="flex flex-col">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium capitalize text-gray-900 dark:text-white">
-                        {i.category}
+                        {item.category}
                       </span>
-                      {i.brand && <span className={pillMuted}>{i.brand}</span>}
-                      {i.color && <span className={pillMuted}>{i.color}</span>}
+                      {item.brand && <span className={pillMuted}>{item.brand}</span>}
+                      {item.color && <span className={pillMuted}>{item.color}</span>}
                       {s.type && <span className={pillMuted}>{s.type}</span>}
                       {s.season && (
                         <span className={pillMuted}>{s.season}</span>
                       )}
                       {s.shade && <span className={pillMuted}>{s.shade}</span>}
-                      {i.statement_piece ? (
+                      {item.statement_piece ? (
                         <span className={pillMuted}>statement</span>
                       ) : null}
-                      {i.category === "top" && s.sleevelength && (
+                      {item.category === "top" && s.sleevelength && (
                         <span className={pillMuted}>{s.sleevelength}</span>
                       )}
-                      {i.category === "jewelry" && s.bundle_id && (
+                      {item.category === "jewelry" && s.bundle_id && (
                         <span className={pillMuted}>bundle: {s.bundle_id}</span>
                       )}
-                      {i.category === "shoes" && s.heel !== undefined && (
+                      {item.category === "shoes" && s.heel !== undefined && (
                         <span className={pillMuted}>
                           {s.heel ? "heel" : "flat"}
                         </span>
                       )}
                     </div>
-                    {i.description && (
+                    {item.description && (
                       <span className="text-sm text-gray-700 dark:text-white/75">
-                        {i.description}
+                        {item.description}
                       </span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex gap-3">
+                  {item.category === "jewelry" && (
+                    <button
+                    className="rounded-lg px-3 py-2 text-sm bg-blue-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15"
+                    disabled={loading}
+                  >
+                    Bundle
+                  </button>
+                  )}
                   <button
                     className="rounded-lg px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15"
-                    onClick={() => startEdit(i)}
+                    onClick={() => startEdit(item)}
                     disabled={loading}
                   >
                     Edit
@@ -988,7 +1009,7 @@ export default function ItemsPage() {
 
                   <button
                     className="text-red-600 dark:text-red-400 hover:underline"
-                    onClick={() => onDelete(i.id)}
+                    onClick={() => onDelete(item.id)}
                     disabled={loading}
                   >
                     Delete
@@ -997,7 +1018,7 @@ export default function ItemsPage() {
               </div>
 
               {/* EDIT FORM for the selected item */}
-              {editId === i.id && (
+              {editId === item.id && (
                 <div className="mt-5 grid gap-4 md:grid-cols-3 border-t pt-5 border-gray-200 dark:border-white/10">
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">Category</Label>
@@ -1240,7 +1261,9 @@ export default function ItemsPage() {
                   </div>
                 </div>
               )}
+              <div className="mt-5 border-b-1"/>
             </div>
+            
           );
         })}
       </section>
