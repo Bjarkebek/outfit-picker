@@ -1,0 +1,126 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "← Back" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - button "← Back" [ref=e5]
+      - img "Outfit Picker Logo" [ref=e6]
+      - link "Generate outfit" [ref=e7] [cursor=pointer]:
+        - /url: /generate
+        - button "Generate outfit" [ref=e8]
+    - heading "Items" [level=1] [ref=e9]
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]: Category
+        - combobox [ref=e14]:
+          - generic: top
+          - img
+      - generic [ref=e15]:
+        - generic [ref=e16]: Description
+        - textbox "e.g. Blue blouse" [ref=e17]: Rød hoodie
+      - generic [ref=e18]:
+        - generic [ref=e19]: Color
+        - textbox "e.g. blue" [ref=e20]: red
+      - generic [ref=e21]:
+        - generic [ref=e22]: Brand
+        - textbox "e.g. Nike, Zara" [ref=e23]: Adidas
+      - generic [ref=e24]:
+        - generic [ref=e25]: Type
+        - combobox [ref=e26]:
+          - generic: hoodie
+          - img
+      - generic [ref=e27]:
+        - generic [ref=e28]: Season
+        - combobox [ref=e29]:
+          - generic: spring
+          - img
+      - generic [ref=e30]:
+        - generic [ref=e31]: Shade
+        - combobox [ref=e32]:
+          - generic: — select —
+          - img
+      - generic [ref=e33]:
+        - checkbox "Statement piece" [ref=e34]
+        - generic [ref=e35]: Statement piece
+      - generic [ref=e36]:
+        - generic [ref=e37]: Sleeve length
+        - combobox [ref=e38]:
+          - generic: — select —
+          - img
+      - generic [ref=e39]:
+        - generic [ref=e40]: Image (optional)
+        - button "Choose File" [ref=e41]
+      - button "Save" [ref=e43]
+    - generic [ref=e44]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e48]: no img
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - generic [ref=e51]: top
+              - generic [ref=e52]: Zara
+            - generic [ref=e53]: Blue blouse
+        - generic [ref=e54]:
+          - button "Edit" [ref=e55]
+          - button "Delete" [ref=e56]
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - generic [ref=e60]: no img
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - generic [ref=e63]: bottom
+              - generic [ref=e64]: COS
+            - generic [ref=e65]: Black pants
+        - generic [ref=e66]:
+          - button "Edit" [ref=e67]
+          - button "Delete" [ref=e68]
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - generic [ref=e72]: no img
+          - generic [ref=e73]:
+            - generic [ref=e74]:
+              - generic [ref=e75]: shoes
+              - generic [ref=e76]: Nike
+            - generic [ref=e77]: White sneakers
+        - generic [ref=e78]:
+          - button "Edit" [ref=e79]
+          - button "Delete" [ref=e80]
+      - generic [ref=e82]:
+        - generic [ref=e83]:
+          - generic [ref=e84]: no img
+          - generic [ref=e85]:
+            - generic [ref=e86]:
+              - generic [ref=e87]: jacket
+              - generic [ref=e88]: Levi's
+            - generic [ref=e89]: Denim jacket
+        - generic [ref=e90]:
+          - button "Edit" [ref=e91]
+          - button "Delete" [ref=e92]
+      - generic [ref=e94]:
+        - generic [ref=e95]:
+          - generic [ref=e96]: no img
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - generic [ref=e99]: jewelry
+              - generic [ref=e100]: H&M
+            - generic [ref=e101]: Pearl earrings
+        - generic [ref=e102]:
+          - button "Edit" [ref=e103]
+          - button "Delete" [ref=e104]
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: no img
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - generic [ref=e111]: hairclip
+              - generic [ref=e112]: Muji
+            - generic [ref=e113]: Black clip
+        - generic [ref=e114]:
+          - button "Edit" [ref=e115]
+          - button "Delete" [ref=e116]
+  - contentinfo [ref=e117]: © 2025 Outfit Picker
+  - alert [ref=e118]
+```
