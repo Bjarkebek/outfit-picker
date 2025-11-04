@@ -1,0 +1,15 @@
+{
+  "overrides": [
+    {
+      "files": [
+        "app/tests/**/*.{ts,tsx}",
+        "**/*.spec.{ts,tsx}",
+        "**/*.e2e.{ts,tsx}"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+      }
+    }
+  ]
+}
