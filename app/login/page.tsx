@@ -1,9 +1,19 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
+export const dynamic = "force-dynamic";
+
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const supabase = supabaseBrowser();
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -60,7 +70,7 @@ export default function LoginPage() {
           value={pw}
           onChange={(e) => setPw(e.target.value)}
         />
-        <button className="bg-green-600 text-white py-2 rounded" type="submit">
+        <button className="bg-green-600 text-white py-2 rounded" name="sign in" type="submit">
           Log ind
         </button>
       </form>
