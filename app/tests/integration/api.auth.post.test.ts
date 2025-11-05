@@ -6,9 +6,8 @@ type Auth = {
   signOut: () => Promise<void>;
 };
 
-// Mock-objekt med korrekte typer
+
 const mockAuth: Auth = {
-  // vi.fn tager ét type-argument: funktionssignaturen
   setSession: vi.fn<Auth['setSession']>().mockResolvedValue(void 0),
   signOut: vi.fn<Auth['signOut']>().mockResolvedValue(void 0),
 };
@@ -25,7 +24,6 @@ beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co';
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon';
 
-  // nulstil kald mellem tests
   (mockAuth.setSession as unknown as jest.Mock | ReturnType<typeof vi.fn>).mockClear?.();
   (mockAuth.signOut as unknown as jest.Mock | ReturnType<typeof vi.fn>).mockClear?.();
 });

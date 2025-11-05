@@ -13,7 +13,6 @@ describe('cn()', () => {
 
   test('ignorerer falsy værdier og arrays/objekter via clsx', () => {
     const out = cn('a', false && 'x', null as any, undefined as any, ['b', { c: true, d: false }]);
-    // rækkefølge kan variere; tjek blot indhold
     expect(out.split(' ').sort()).toEqual(expect.arrayContaining(['a', 'b', 'c']));
     expect(out).not.toMatch(/\s{2,}/);
   });
