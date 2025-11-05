@@ -36,38 +36,44 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Dependencies in this project
 
 # Next.js + React + TypeScript
-npm i next react react-dom typescript
+'npm i next react react-dom typescript'
 
 # Supabase (backend/database/auth)
-npm i @supabase/supabase-js @supabase/auth-helpers-nextjs @supabase/ssr
+'npm i @supabase/supabase-js @supabase/auth-helpers-nextjs @supabase/ssr'
 
 # TailwindCSS (styling)
-npm i tailwindcss postcss autoprefixer tailwind-merge class-variance-authority clsx lucide-react
+'npm i tailwindcss postcss autoprefixer tailwind-merge class-variance-authority clsx lucide-react'
 
 # Radix UI Components
-npm i @radix-ui/react-label @radix-ui/react-select
+'npm i @radix-ui/react-label @radix-ui/react-select'
 
 # Vitest + jsdom + Testing Library
-npm i -D vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom jest-axe
+'npm i -D vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom jest-axe'
 
-# Playwright (chromium er nok til start)
-npm i -D @playwright/test
-npx playwright install chromium
+# Playwright (chromium)
+'npm i -D @playwright/test'
+'npx playwright install chromium'
 
 # Linting & Formattering
-npm i -D eslint eslint-config-next @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier
+'npm i -D eslint eslint-config-next @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier'
 
 
 
 ## TESTS
 
+# for e2e run env 1
+'$env:E2E="1"; npm run dev'
+
+# manual testing/looking with playwright
+'npx playwright codegen http://localhost:3000/'
+
 # all vitests
-npm run test-all
+'npm run test-all'
 # unit test (vitest)
-npm run test-unit
+'npm run test-unit'
 # integration test (vitest)
-npm run test-int
+'npm run test-int'
 # components test (vitest)
-npm run test-comp
+'npm run test-comp'
 # e2e tests (playwright)
-npm run test-e2e
+'npm run test-e2e'
