@@ -15,7 +15,7 @@ test.describe("Generate", () => {
       (await page.getByRole("button", { name: /generate/i }).elementHandle())
     if (genBtn) await genBtn.click( {timeout: 3000});
 
-    await expect(page.getByText(/^top:/i)).toBeVisible(); // -- fejler (når generate button klikkes, dukker der ikke noget op højest sandsynligt)
+    await expect(page.getByText(/^top:/i)).toBeVisible();
 
     const saveBtn =
       (await page.getByRole("button", { name: /gem outfit/i }).elementHandle());

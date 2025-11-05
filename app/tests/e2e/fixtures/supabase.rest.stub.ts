@@ -1,9 +1,7 @@
 import { Page } from "@playwright/test";
 import { stubSupabaseAuth } from './auth.stub';
 
-// Lille in-memory “DB” så POST/INSERT afspejles i efterfølgende GETs:
 function seedDB() {
-  // typer matcher dine heuristikker i generate/page.tsx (shirt/pants/sneakers osv.)
   const items = [
     { id: "i-top-1", category: "top", description: "Blue blouse", brand: "Zara", type: "blouse", active: true, statement_piece: false, image_url: null },
     { id: "i-bottom-1", category: "bottom", description: "Black pants", brand: "COS", type: "pants", active: true, statement_piece: false, image_url: null },
@@ -26,16 +24,14 @@ function seedDB() {
 export async function stubSupabaseData(page: Page) {
   const db = seedDB();
 
-  // Helper til at parse query
   const isGET = (r: any) => r.request().method() === "GET";
   const isPOST = (r: any) => r.request().method() === "POST";
 
   // -------- ITEM --------
-  // GET /rest/v1/item?select=*&... (evt. eq=active.true)
+  // GET /rest/v1/item?select=*&...
   await page.route(/\/rest\/v1\/item(\?.*)?$/, async (route) => {
     const req = route.request();
     if (isGET(route)) {
-      // eq=active.true -> filtrer aktive
       const url = new URL(req.url());
       const hasActive = url.searchParams.get("active")?.includes(".true");
       const data = hasActive ? db.items.filter(i => i.active) : db.items;
@@ -55,15 +51,14 @@ export async function stubSupabaseData(page: Page) {
     return route.fallback();
   });
 
-  // Subtype endpoints du kalder i Items (vi accepterer inserts/upserts med 201/204)
   for (const table of ["top", "bottom", "jacket", "shoe", "jewelry", "hairclip"]) {
     await page.route(new RegExp(`/rest/v1/${table}(\\?.*)?$`), async (route) => {
       if (isPOST(route)) return route.fulfill({ status: 201, json: {} });
-      // upsert i edit-mode
+
       if (route.request().method() === "UPSERT" || route.request().method() === "PATCH" || route.request().method() === "PUT") {
         return route.fulfill({ status: 204, body: "" });
       }
-      // GET til subtype i loadItems() -> svar med tom liste for simpelt seed (du kan udvide)
+
       if (isGET(route)) return route.fulfill({ status: 200, json: [] });
       return route.fallback();
     });
@@ -73,11 +68,13 @@ export async function stubSupabaseData(page: Page) {
   await page.route(/\/rest\/v1\/outfit(\?.*)?$/, async (route) => {
     const req = route.request();
 
+    // GET
     if (isGET(route)) {
       const data = db.outfits.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
       return route.fulfill({ status: 200, json: data });
     }
 
+    // POST
     if (isPOST(route)) {
       let body: any = {};
       try { body = JSON.parse(req.postData() || "{}"); } catch {}
@@ -106,13 +103,10 @@ export async function stubSupabaseData(page: Page) {
     return route.fallback();
   });
 
-  // /rest/v1/outfititem
   await page.route(/\/rest\/v1\/outfititem(\?.*)?$/, async (route) => {
     const req = route.request();
 
     if (isGET(route)) {
-      // bruges på outfits/page.tsx med select=role,item_id,item:item(...)
-      // returnér simple rows, item embed håndterer vi ikke — siden tåler nulls
       const url = new URL(req.url());
       const eqOutfit = url.searchParams.get("outfit_id") || "";
       const outfitId = eqOutfit.replace(/^eq\./, "");
@@ -137,7 +131,7 @@ export async function stubSupabaseData(page: Page) {
       const role = eqRole.replace(/^eq\./, "");
       const itemId = eqItem.replace(/^eq\./, "");
 
-      // slet efter givne filters (enkle varianter)
+      
       let rows = db.outfititems;
       rows = outfitId ? rows.filter(r => !(r.outfit_id === outfitId && (!role || r.role === role) && (!itemId || r.item_id === itemId))) : rows;
       db.outfititems.length = 0;

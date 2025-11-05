@@ -1,10 +1,10 @@
 
 import { Page } from '@playwright/test';
-import { stubSupabaseAuth } from './auth.stub'; // din eksisterende
+import { stubSupabaseAuth, setTestSessionCookies  } from './auth.stub';
 
 export async function loginViaUI(page: Page) {
-  // Sørg for at auth-kald stubs er aktive
   await stubSupabaseAuth(page);
+  await setTestSessionCookies(page);
 
   await page.goto('/login');
   await page.getByPlaceholder('Email').fill('user@example.com');
