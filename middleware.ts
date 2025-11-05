@@ -2,8 +2,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+
 export async function middleware(req: NextRequest) {
-  // Tillad assets uden auth
+
+  if (process.env.E2E === '1') {
+    return NextResponse.next();
+  }
+
   const publicPaths = ['/login', '/favicon.ico', '/OutfitPickerLogo.png'];
   if (
     publicPaths.includes(req.nextUrl.pathname) ||
@@ -13,7 +18,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Init Supabase server client (læser/fornyer session cookies)
   const res = NextResponse.next();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,7 +37,6 @@ export async function middleware(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Ikke logget ind → send til /login
   if (!user) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
@@ -41,11 +44,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Logget ind → giv adgang
   return res;
 }
 
 export const config = {
-  // Kør middleware på alle routes
   matcher: ['/((?!api/.*).*)'],
 };

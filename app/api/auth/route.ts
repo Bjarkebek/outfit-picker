@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+type CookieOpts = Record<string, unknown>;
+
 export async function POST(req: NextRequest) {
   const { event, session } = await req.json();
   const res = NextResponse.json({ ok: true });
@@ -12,11 +14,11 @@ export async function POST(req: NextRequest) {
     {
       cookies: {
         get: (key: string) => req.cookies.get(key)?.value,
-        set: (key: string, value: string, options?: any) => {
-          res.cookies.set({ name: key, value, ...options });
+        set: (key: string, value: string, options?: CookieOpts) => {
+          res.cookies.set({ name: key, value, ...(options || {}) });
         },
-        remove: (key: string, options?: any) => {
-          res.cookies.set({ name: key, value: "", ...options, maxAge: 0 });
+        remove: (key: string, options?: CookieOpts) => {
+          res.cookies.set({ name: key, value: "", ...(options || {}), maxAge: 0 });
         },
       },
     }
