@@ -29,7 +29,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            bjarkebek/outfitpicker:master
+            bjarkebek/outfitpicker:latest
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
