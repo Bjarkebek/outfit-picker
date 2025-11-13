@@ -3,7 +3,7 @@ name: Build and push Docker image
 on:
   push:
     branches:
-      - master   # skift til main hvis din default branch hedder main
+      - master
 
 jobs:
   build-and-push:
@@ -30,7 +30,6 @@ jobs:
           push: true
           tags: |
             bjarkebek/outfitpicker:master
-            bjarkebek/outfitpicker:latest
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
