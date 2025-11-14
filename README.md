@@ -35,45 +35,45 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Dependencies in this project
 
-# Next.js + React + TypeScript
+### Next.js + React + TypeScript
 'npm i next react react-dom typescript'
 
-# Supabase (backend/database/auth)
+### Supabase (backend/database/auth)
 'npm i @supabase/supabase-js @supabase/auth-helpers-nextjs @supabase/ssr'
 
-# TailwindCSS (styling)
+### TailwindCSS (styling)
 'npm i tailwindcss postcss autoprefixer tailwind-merge class-variance-authority clsx lucide-react'
 
-# Radix UI Components
+### Radix UI Components
 'npm i @radix-ui/react-label @radix-ui/react-select'
 
-# Vitest + jsdom + Testing Library
+### Vitest + jsdom + Testing Library
 'npm i -D vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom jest-axe'
 
-# Playwright (chromium)
+### Playwright (chromium)
 'npm i -D @playwright/test'
 'npx playwright install chromium'
 
-# Linting & Formattering
+### Linting & Formattering
 'npm i -D eslint eslint-config-next @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier'
 
 
 
 ## TESTS
 
-# for e2e run env 1
+### for e2e run env 1
 '$env:E2E="1"; npm run dev'
 
-# manual testing/looking with playwright
+### manual testing/looking with playwright
 'npx playwright codegen http://localhost:3000/'
 
-# all vitests
+### all vitests
 'npm run test-all'
-# unit test (vitest)
+### unit test (vitest)
 'npm run test-unit'
-# integration test (vitest)
+### integration test (vitest)
 'npm run test-int'
-# components test (vitest)
+### components test (vitest)
 'npm run test-comp'
-# e2e tests (playwright)
+### e2e tests (playwright)
 'npm run test-e2e'
