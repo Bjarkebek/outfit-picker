@@ -44,15 +44,18 @@ import {
   SHOE_TYPES,
   JEWELRY_TYPES,
   SLEEVELENGTHS,
-  JEWELRY_BUNDLES,
 } from "@/Models/subtypes";
+
+// Bundles import
+import type { JewelryBundle } from "@/Models/bundle";
 
 // Unified shape used to merge subtype data onto items for display/edit
 type SubtypeView = {
   type?: string | null;
   sleevelength?: string | null;
   heel?: boolean | null;
-  bundle_id?: string | null;
+  bundle?: JewelryBundle | null;
+  bundle_id: string | null;
   season?: string | null;
   shade?: string | null;
 };
@@ -127,6 +130,10 @@ export default function ItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [subtypes, setSubtypes] = useState<Record<string, SubtypeView>>({});
   const [loading, setLoading] = useState(false);
+
+  // bundles
+  const [bundles, setBundles] = useState<JewelryBundle[]>([]);
+  const [bundlesLoading, setBundlesLoading] = useState(false);
 
   // Create form state hook
   const c = useCreateState();
@@ -220,8 +227,8 @@ export default function ItemsPage() {
           idsJewelry.length
             ? supabase
                 .from("jewelry")
-                .select("id,type,bundle_id,item_id")
-                .in("id", idsJewelry)
+                .select("item_id,type,bundle:bundle_id(id,name,occasion)")
+                .in("item_id", idsJewelry)
             : { data: [] },
           idsHairclip.length
             ? supabase
@@ -268,24 +275,53 @@ export default function ItemsPage() {
         };
       });
       (jewelry.data ?? []).forEach((r: Jewelry) => {
-        map[r.item_id] = { ...(map[r.item_id] || {}), type: r.type };
+        const b = r.bundle ?? null;
+        const bid = b?.id ? String(b.id) : null;
+        map[r.item_id] = {
+          ...(map[r.item_id] || {}),
+          type: r.type,
+          bundle_id: bid,
+          bundle: b,
+        };
       });
       (hairclips.data ?? []).forEach((r: any) => {
         map[r.item_id] = { ...(map[r.item_id] || {}), shade: r.shade ?? null };
       });
-
       setSubtypes(map);
     } catch (e: any) {
       console.error("loadItems error:", e);
-      alert("Kunne ikke hente items: " + (e.message ?? e));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadBundles() {
+    setBundlesLoading(true);
+    try {
+      const { data } = await supabase
+        .from("jewelry_bundle")
+        .select("*")
+        .order("name", { ascending: true });
+
+      const rows = (data ?? []).map((b: any) => ({
+        id: String(b.id),
+        name: b.name,
+        occasion: b.occasion ?? null,
+      }));
+
+      setBundles(rows);
+    } catch (e) {
+      console.error("loadBundles error:", e);
+      setBundles([]);
+    } finally {
+      setBundlesLoading(false);
     }
   }
 
   // Initial load on mount
   useEffect(() => {
     loadItems();
+    loadBundles();
   }, []);
 
   /* ---------------- CREATE ---------------- */
@@ -388,7 +424,7 @@ export default function ItemsPage() {
         case "jewelry": {
           const { error } = await supabase.from("jewelry").insert({
             type: c.typeValue || null,
-            bundle_id: null, //set bundle_id later
+            bundle_id: c.bundleValue,
             item_id: itemId,
           });
           if (error) throw error;
@@ -425,13 +461,19 @@ export default function ItemsPage() {
     setEDescription(item.description ?? "");
     setEColor(item.color ?? "");
     setEBrand(item.brand ?? "");
+
     const s = subtypes[item.id] || {};
     setESeason(s.season ?? null);
     setEShade(s.shade ?? null);
     setEStatement(!!item.statement_piece);
+    if (item.category === "jewelry") {
+      setEType(s.type ?? "");
+      setEBundle(s.bundle_id ? String(s.bundle_id) : null);
+    } else {
+      setEType("");
+      setEBundle(null);
+    }
 
-    // preload subtype from cache (remaining fields)
-    setEType(s.type ?? "");
     setESleevelength((s.sleevelength as SleeveLength | null) ?? null);
     setEHeel(!!s.heel);
 
@@ -515,62 +557,54 @@ export default function ItemsPage() {
           break;
         }
         case "bottom": {
-          const { error } = await supabase
-            .from("bottom")
-            .upsert(
-              {
-                item_id: editId,
-                type: eType || null,
-                season: eSeason ?? null,
-                shade: eShade ?? null,
-              },
-              { onConflict: "item_id" }
-            );
+          const { error } = await supabase.from("bottom").upsert(
+            {
+              item_id: editId,
+              type: eType || null,
+              season: eSeason ?? null,
+              shade: eShade ?? null,
+            },
+            { onConflict: "item_id" }
+          );
           if (error) throw error;
           break;
         }
         case "jacket": {
-          const { error } = await supabase
-            .from("jacket")
-            .upsert(
-              {
-                item_id: editId,
-                type: eType || null,
-                season: eSeason ?? null,
-                shade: eShade ?? null,
-              },
-              { onConflict: "item_id" }
-            );
+          const { error } = await supabase.from("jacket").upsert(
+            {
+              item_id: editId,
+              type: eType || null,
+              season: eSeason ?? null,
+              shade: eShade ?? null,
+            },
+            { onConflict: "item_id" }
+          );
           if (error) throw error;
           break;
         }
         case "shoes": {
-          const { error } = await supabase
-            .from("shoe")
-            .upsert(
-              {
-                item_id: editId,
-                type: eType || null,
-                heel: eHeel,
-                season: eSeason ?? null,
-                shade: eShade ?? null,
-              },
-              { onConflict: "item_id" }
-            );
+          const { error } = await supabase.from("shoe").upsert(
+            {
+              item_id: editId,
+              type: eType || null,
+              heel: eHeel,
+              season: eSeason ?? null,
+              shade: eShade ?? null,
+            },
+            { onConflict: "item_id" }
+          );
           if (error) throw error;
           break;
         }
         case "jewelry": {
-          const { error } = await supabase
-            .from("jewelry")
-            .upsert(
-              {
-                item_id: editId,
-                type: eType || null,
-                bundle_id: eBundle || null,
-              },
-              { onConflict: "item_id" }
-            );
+          const { error } = await supabase.from("jewelry").upsert(
+            {
+              item_id: editId,
+              type: eType || null,
+              bundle_id: eBundle || null,
+            },
+            { onConflict: "item_id" }
+          );
           if (error) throw error;
           break;
         }
@@ -654,6 +688,20 @@ export default function ItemsPage() {
       ? [...JEWELRY_TYPES]
       : [];
 
+  // groups items by bundle
+  const itemsByBundle = useMemo(() => {
+    const groups: Record<string, Item[]> = {};
+    for (const it of items) {
+      if (it.category !== "jewelry") continue;
+      const bid = subtypes[it.id]?.bundle_id
+        ? String(subtypes[it.id].bundle_id)
+        : null;
+      if (!bid) continue;
+      (groups[bid] ??= []).push(it);
+    }
+    return groups;
+  }, [items, subtypes]);
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 relative">
       {/* NAVBAR: back button, centered logo, and link to generator */}
@@ -677,9 +725,8 @@ export default function ItemsPage() {
         </Link>
       </nav>
 
-      {/* Page title */}
       <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
-        Items
+        Create item
       </h1>
 
       {/* CREATE FORM: Form for adding a new item and optional image */}
@@ -885,7 +932,7 @@ export default function ItemsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">not applied</SelectItem>
-                  {JEWELRY_BUNDLES.map((b) => (
+                  {bundles.map((b) => (
                     <SelectItem key={b.id} value={b.id}>
                       {b.name}
                     </SelectItem>
@@ -917,23 +964,66 @@ export default function ItemsPage() {
         </div>
       </section>
 
+      {/* BUNDLES: To add or manage existing jewlry bundles */}
+      <h1 className="text-3xl mt-10 font-semibold tracking-tight text-gray-900 dark:text-white">
+        Bundles
+      </h1>
+
+      <section className={`${cardClass} mt-6`}>
+        {bundlesLoading && <p className="text-sm opacity-70">Loading…</p>}
+        {!bundlesLoading && bundles.length === 0 && (
+          <p className="text-sm text-gray-600 dark:text-white/70">
+            No bundles yet.
+          </p>
+        )}
+
+        {bundles.map((bundle) => {
+          const list = itemsByBundle[bundle.id] ?? [];
+
+          return (
+            <div key={bundle.id} className="mb-6">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="font-medium">Bundle:</span>
+                <span className="font-light">{bundle.name}</span>
+              </div>
+              <div>
+                {list.map((item) => {
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 m-2">
+                      <span className="text-sm text-gray-700 dark:text-white/75">
+                        - {item.description}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
       {/* ITEM LIST + EDIT FORM: renders each item card with inline edit form */}
-      <section className="mt-6 space-y-3">
-        {items.length === 0 && (
+      <h1 className="text-3xl mt-10 font-semibold tracking-tight text-gray-900 dark:text-white">
+        All items
+      </h1>
+
+      <section className={`${cardClass} mt-6`}>
+        {loading && <p className="text-sm opacity-70">Loading…</p>}
+        {!loading && items.length === 0 && (
           <p className="text-sm text-gray-600 dark:text-white/70">
             No items yet. Add the first one above.
           </p>
         )}
 
-        {items.map((i) => {
-          const s = subtypes[i.id] || {};
+        {items.map((item) => {
+          const s = subtypes[item.id] || {};
           return (
-            <div key={i.id} className={`${cardClass}`}>
+            <div key={item.id} className=" mb-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  {i.image_url ? (
+                  {item.image_url ? (
                     <img
-                      src={i.image_url}
+                      src={item.image_url}
                       alt=""
                       className="h-16 w-16 rounded-lg object-cover border border-gray-200 dark:border-white/10"
                     />
@@ -945,42 +1035,58 @@ export default function ItemsPage() {
                   <div className="flex flex-col">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium capitalize text-gray-900 dark:text-white">
-                        {i.category}
+                        {item.category}
                       </span>
-                      {i.brand && <span className={pillMuted}>{i.brand}</span>}
-                      {i.color && <span className={pillMuted}>{i.color}</span>}
+                      {item.brand && (
+                        <span className={pillMuted}>{item.brand}</span>
+                      )}
+                      {item.color && (
+                        <span className={pillMuted}>{item.color}</span>
+                      )}
                       {s.type && <span className={pillMuted}>{s.type}</span>}
                       {s.season && (
                         <span className={pillMuted}>{s.season}</span>
                       )}
                       {s.shade && <span className={pillMuted}>{s.shade}</span>}
-                      {i.statement_piece ? (
-                        <span className={pillMuted}>statement</span>
+                      {item.statement_piece ? (
+                        <span className={pillMuted}>statement piece</span>
                       ) : null}
-                      {i.category === "top" && s.sleevelength && (
-                        <span className={pillMuted}>{s.sleevelength}</span>
+                      {item.category === "top" && s.sleevelength && (
+                        <span className={pillMuted}>
+                          {s.sleevelength}-sleeve
+                        </span>
                       )}
-                      {i.category === "jewelry" && s.bundle_id && (
-                        <span className={pillMuted}>bundle: {s.bundle_id}</span>
+                      {item.category === "jewelry" && s.bundle?.name && (
+                        <span className={pillMuted}>
+                          Bundle: {s.bundle?.name}
+                        </span>
                       )}
-                      {i.category === "shoes" && s.heel !== undefined && (
+                      {item.category === "shoes" && s.heel !== undefined && (
                         <span className={pillMuted}>
                           {s.heel ? "heel" : "flat"}
                         </span>
                       )}
                     </div>
-                    {i.description && (
+                    {item.description && (
                       <span className="text-sm text-gray-700 dark:text-white/75">
-                        {i.description}
+                        {item.description}
                       </span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex gap-3">
+                  {item.category === "jewelry" && (
+                    <button
+                      className="rounded-lg px-3 py-2 text-sm bg-blue-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15"
+                      disabled={loading}
+                    >
+                      Bundle
+                    </button>
+                  )}
                   <button
                     className="rounded-lg px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15"
-                    onClick={() => startEdit(i)}
+                    onClick={() => startEdit(item)}
                     disabled={loading}
                   >
                     Edit
@@ -988,7 +1094,7 @@ export default function ItemsPage() {
 
                   <button
                     className="text-red-600 dark:text-red-400 hover:underline"
-                    onClick={() => onDelete(i.id)}
+                    onClick={() => onDelete(item.id)}
                     disabled={loading}
                   >
                     Delete
@@ -997,7 +1103,7 @@ export default function ItemsPage() {
               </div>
 
               {/* EDIT FORM for the selected item */}
-              {editId === i.id && (
+              {editId === item.id && (
                 <div className="mt-5 grid gap-4 md:grid-cols-3 border-t pt-5 border-gray-200 dark:border-white/10">
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">Category</Label>
@@ -1191,9 +1297,9 @@ export default function ItemsPage() {
                     <div className="flex flex-col gap-1.5">
                       <Label className="text-sm">Bundle</Label>
                       <Select
-                        value={c.bundleValue ?? "none"}
+                        value={eBundle ?? "none"}
                         onValueChange={(v) =>
-                          c.setBundleValue(v === "none" ? null : v)
+                          setEBundle(v === "none" ? null : v)
                         }
                       >
                         <SelectTrigger className="w-full">
@@ -1201,7 +1307,7 @@ export default function ItemsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">not applied</SelectItem>
-                          {JEWELRY_BUNDLES.map((b) => (
+                          {bundles.map((b) => (
                             <SelectItem key={b.id} value={b.id}>
                               {b.name}
                             </SelectItem>
@@ -1240,6 +1346,7 @@ export default function ItemsPage() {
                   </div>
                 </div>
               )}
+              <div className="mt-5 border-b-1" />
             </div>
           );
         })}
