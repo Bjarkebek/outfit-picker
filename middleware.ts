@@ -9,7 +9,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const publicPaths = ['/login', '/favicon.ico', '/OutfitPickerLogo.png'];
+  const publicPaths = ['/login', '/signup', '/forgot-password', '/reset-password', '/favicon.ico', '/OutfitPickerLogo.png'];
   if (
     publicPaths.includes(req.nextUrl.pathname) ||
     req.nextUrl.pathname.startsWith('/_next') ||

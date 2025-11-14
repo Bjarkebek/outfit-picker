@@ -1,6 +1,7 @@
 // Subtype table models
 // Define arrays first and derive types from them to avoid drift.
 import type { Season, Shade } from "@/Models/item";
+import type { JewelryBundle } from "@/Models/bundle"
 export const SLEEVELENGTHS = ["short", "long"] as const;
 export type SleeveLength = (typeof SLEEVELENGTHS)[number] | null;
 
@@ -38,6 +39,13 @@ export type Jewelry = {
   item_id: string;
   type: JewelryType | null;
   bundle_id?: string | null;
+  bundle: JewelryBundle | null;
+};
+
+export type Jewelry_Bundle = {
+  item_id: string;
+  name: string | null;
+  occasion?: string | null;
 };
 
 export type Hairclip = {
@@ -98,11 +106,3 @@ export const JEWELRY_TYPES = [
   "watch",
 ] as const;
 export type JewelryType = typeof JEWELRY_TYPES[number];
-
-
-// Central place to list jewelry bundles used in UI until moved to DB table
-export const JEWELRY_BUNDLES = [
-  { id: "bundle1", name: "Jewelry Set 1", occasion: "casual" },
-  { id: "bundle2", name: "Jewelry Set 2", occasion: "formal" },
-  { id: "bundle3", name: "Jewelry Set 3", occasion: "party" },
-];

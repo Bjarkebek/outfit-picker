@@ -8,6 +8,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Item as ItemBase } from "@/Models/item";
 
+export const dynamic = "force-dynamic";
+
+
 // Extend the base Item with fields this page reads from joins/queries
 type Item = ItemBase & {
   type: string | null;
@@ -149,7 +152,7 @@ export default function Generate() {
     }
 
     const avoid = new Set<string>();
-    let chosen: Chosen[] = [];
+    const chosen: Chosen[] = [];
 
     // DRESS branch (10% chance if present)
     const dresses = items.filter(

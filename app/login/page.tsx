@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -47,9 +48,7 @@ function LoginInner() {
   };
 
   const onSignup = async () => {
-    const { error } = await supabase.auth.signUp({ email, password: pw });
-    if (error) setMsg(error.message);
-    else setMsg("Bruger oprettet – tjek mail, og log derefter ind.");
+    router.push('/signup')
   };
 
   return (
@@ -75,11 +74,14 @@ function LoginInner() {
         </button>
       </form>
       <button
-        className="mt-3 w-full bg-blue-600 text-white py-2 rounded"
+        className="mt-3 w-full bg-blue-600 text-white py-2 rounded" type="button"
         onClick={onSignup}
       >
         Opret bruger
       </button>
+      <Link href="/forgot-password" className="text-sm underline">
+        Glemt password?
+      </Link>
       {msg && <p className="mt-3 text-sm text-red-600">{msg}</p>}
     </div>
   );
