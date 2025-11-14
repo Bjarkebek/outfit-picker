@@ -1,79 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Outfit Picker
 
-## Getting Started
+Outfit Picker er en webapp til at gemme, organisere og kombinere tøj. Brugeren kan oprette items, gruppere smykker i bundles og generere outfits på tværs af kategorier som top, bottom, shoes og jewelry. Projektet er bygget i Next.js med Supabase som backend og Tailwind CSS til styling. Der er lagt vægt på enkel struktur, testbarhed og en opsætning, der er let at drifte og køre både lokalt og i Docker.
 
-First, run the development server:
+## Funktioner
 
-```bash
+• Opret, rediger og slet tøjitems  
+• Bundles til smykker  
+• Generering af outfits ud fra eksisterende items  
+• Login og brugerhåndtering gennem Supabase  
+• Komponentbaseret UI med Tailwind CSS  
+• Testopsætning med Vitest og Playwright
+
+## Teknologier
+
+• Next.js, React og TypeScript  
+• Supabase (auth, database og storage)  
+• Tailwind CSS og Radix UI  
+• Vitest og Testing Library  
+• Playwright til e2e-tests  
+• ESLint og Prettier  
+• Docker til containerisering
+
+## Kom i gang
+
+### Klon projektet
+
+'''
+git clone https://github.com/Bjarkebek/outfit-picker
+cd outfit-picker
+'''
+
+### Installér afhængigheder
+
+'''
+npm install
+'''
+
+### Environment variables
+
+Opret en fil med navnet .env.local i roden af projektet. Den skal indeholde projektets Supabase-nøgler.
+
+Eksempel:
+
+'''
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+'''
+
+### Start udviklingsserver
+
+'''
 npm run dev
-```
+'''
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Appen åbnes på http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Kørsel via Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Projektet kan køres som container, enten lokalt eller på server.
 
-## Learn More
+### Pull image fra Docker Hub
 
-To learn more about Next.js, take a look at the following resources:
+'''
+docker pull bjarkebek/outfitpicker:master
+'''
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Start containeren
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+'''
+docker run --name outfitpicker \
+  -p 3000:3000 \
+  --env-file .env.local \
+  bjarkebek/outfitpicker:master
+'''
 
-## Deploy on Vercel
+Appen findes herefter på http://localhost:3000
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Starte og stoppe eksisterende container
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+'''
+docker start outfitpicker
+docker stop outfitpicker
+'''
 
+## Tests
 
+Projektet bruger Vitest til unit-, integration- og komponenttests samt Playwright til e2e-tests.
 
+### E2E-tests
 
+Start udviklingsserveren med E2E-flag:
 
-## Dependencies in this project
+'''
+$env:E2E="1"; npm run dev
+'''
 
-### Next.js + React + TypeScript
-'npm i next react react-dom typescript'
+### Testkommandoer
 
-### Supabase (backend/database/auth)
-'npm i @supabase/supabase-js @supabase/auth-helpers-nextjs @supabase/ssr'
+'''
+npm run test-all
+npm run test-unit
+npm run test-int
+npm run test-comp
+npm run test-e2e
+'''
 
-### TailwindCSS (styling)
-'npm i tailwindcss postcss autoprefixer tailwind-merge class-variance-authority clsx lucide-react'
+### Playwright codegen
 
-### Radix UI Components
-'npm i @radix-ui/react-label @radix-ui/react-select'
+'''
+npx playwright codegen http://localhost:3000/
+'''
 
-### Vitest + jsdom + Testing Library
-'npm i -D vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom jest-axe'
+## Afhængigheder
 
-### Playwright (chromium)
-'npm i -D @playwright/test'
-'npx playwright install chromium'
+• Next.js, React og TypeScript  
+• Supabase SDK og auth helpers  
+• Tailwind CSS, PostCSS og Autoprefixer  
+• Tailwind Merge, clsx, class-variance-authority og lucide-react  
+• Radix UI  
+• Vitest, jsdom, Testing Library og jest-axe  
+• Playwright  
+• ESLint, Prettier og TypeScript ESLint plugins
 
-### Linting & Formattering
-'npm i -D eslint eslint-config-next @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier'
+## For rekrutter
 
-
-
-## TESTS
-
-### for e2e run env 1
-'$env:E2E="1"; npm run dev'
-
-### manual testing/looking with playwright
-'npx playwright codegen http://localhost:3000/'
-
-### all vitests
-'npm run test-all'
-### unit test (vitest)
-'npm run test-unit'
-### integration test (vitest)
-'npm run test-int'
-### components test (vitest)
-'npm run test-comp'
-### e2e tests (playwright)
-'npm run test-e2e'
+Outfit Picker viser praktisk erfaring med Next.js, Supabase og TypeScript samt et gennemført test-setup med Vitest og Playwright. Appen kan både køre lokalt og via Docker og er struktureret, så den nemt kan udvides eller deployes.
