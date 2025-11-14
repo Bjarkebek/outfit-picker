@@ -25,34 +25,33 @@ Outfit Picker er en webapp til at gemme, organisere og kombinere tøj. Brugeren 
 
 ### Klon projektet
 
-'''
+```
 git clone https://github.com/Bjarkebek/outfit-picker
 cd outfit-picker
-'''
+```
 
 ### Installér afhængigheder
 
-'''
+```
 npm install
-'''
+```
 
 ### Environment variables
 
 Opret en fil med navnet .env.local i roden af projektet. Den skal indeholde projektets Supabase-nøgler.
 
 Eksempel:
-
-'''
+```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
-'''
+```
 
 ### Start udviklingsserver
 
-'''
+```
 npm run dev
-'''
+```
 
 Appen åbnes på http://localhost:3000
 
@@ -62,27 +61,24 @@ Projektet kan køres som container, enten lokalt eller på server.
 
 ### Pull image fra Docker Hub
 
-'''
+```
 docker pull bjarkebek/outfitpicker:master
-'''
+```
 
 ### Start containeren
 
-'''
-docker run --name outfitpicker \
-  -p 3000:3000 \
-  --env-file .env.local \
-  bjarkebek/outfitpicker:master
-'''
+```
+docker run --name outfitpicker -p 3000:3000 --env-file .env.local bjarkebek/outfitpicker:master
+```
 
 Appen findes herefter på http://localhost:3000
 
 ### Starte og stoppe eksisterende container
 
-'''
+```
 docker start outfitpicker
 docker stop outfitpicker
-'''
+```
 
 ## Tests
 
@@ -92,25 +88,25 @@ Projektet bruger Vitest til unit-, integration- og komponenttests samt Playwrigh
 
 Start udviklingsserveren med E2E-flag:
 
-'''
+```
 $env:E2E="1"; npm run dev
-'''
+```
 
 ### Testkommandoer
 
-'''
+```
 npm run test-all
 npm run test-unit
 npm run test-int
 npm run test-comp
 npm run test-e2e
-'''
+```
 
 ### Playwright codegen
 
-'''
+```
 npx playwright codegen http://localhost:3000/
-'''
+```
 
 ## Afhængigheder
 
