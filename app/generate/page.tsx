@@ -149,7 +149,7 @@ export default function Generate() {
     }
 
     const avoid = new Set<string>();
-    let chosen: Chosen[] = [];
+    const chosen: Chosen[] = [];
 
     // DRESS branch (10% chance if present)
     const dresses = items.filter(
